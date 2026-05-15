@@ -1,0 +1,3733 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APIA SmartAgri AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root {
+  --green-deep: #0a5c35;
+  --green-mid: #128c51;
+  --green-light: #22c96f;
+  --green-glow: #3ae07f;
+
+  --gold: #d4b661;
+  --gold-light: #f5d685;
+  --cream: #fbf9f4;
+
+  --dark: #122a1e;
+  --dark-2: #1b3a29;
+  --dark-3: #234733;
+
+  --glass-bg: rgba(255,255,255,0.11);
+  --glass-border: rgba(255,255,255,0.22);
+  --glass-hover: rgba(255,255,255,0.16);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(230,255,240,0.9);
+  --text-muted: rgba(200,230,215,0.7);
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Outfit', 'Tajawal', sans-serif;
+  background: var(--dark);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.bg-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, #1d6b3e 0%, transparent 65%),
+    radial-gradient(ellipse 60% 80% at 90% 100%, #15572f 0%, transparent 60%),
+    #12281c;
+}
+
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(29,184,99,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(29,184,99,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+}
+
+.orb {
+  position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; pointer-events: none;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.orb-1 { width: 500px; height: 500px; top: -150px; left: -100px; background: rgba(22,140,80,0.28); animation-delay: 0s; }
+.orb-2 { width: 400px; height: 400px; bottom: -100px; right: -80px; background: rgba(13,100,55,0.32); animation-delay: -4s; }
+.orb-3 { width: 300px; height: 300px; top: 40%; left: 60%; background: rgba(201,168,76,0.12); animation-delay: -8s; }
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(30px,-20px) scale(1.05); }
+  66% { transform: translate(-20px,30px) scale(0.96); }
+}
+
+.shell {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-rows: 72px 1fr;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center;
+  padding: 0 2rem;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(14,34,24,0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  position: relative;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--green-mid), var(--gold), var(--green-mid), transparent);
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-logo {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-glow));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(29,184,99,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-logo::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+}
+
+.brand-logo svg { position: relative; z-index: 1; }
+
+.brand-text { line-height: 1.2; }
+.brand-name {
+  font-size: 17px; font-weight: 700;
+  background: linear-gradient(90deg, #e8f5ec, var(--green-glow));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.3px;
+}
+.brand-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.topbar-center { flex: 1; display: flex; justify-content: center; }
+
+.top-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 6px 14px; border-radius: 20px;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green-glow);
+  box-shadow: 0 0 8px var(--green-glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+
+.lang-toggle {
+  display: flex; gap: 4px;
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  padding: 4px; border-radius: 10px;
+}
+.lang-btn {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 11px; font-weight: 500; padding: 4px 10px;
+  border-radius: 7px; cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.04em;
+}
+.lang-btn.active {
+  background: var(--green-mid); color: #fff;
+  box-shadow: 0 0 10px rgba(13,122,69,0.4);
+}
+.lang-btn:hover:not(.active) { color: var(--text-primary); background: var(--glass-hover); }
+
+.time-display {
+  font-size: 13px; color: var(--text-secondary);
+  font-weight: 300; letter-spacing: 0.05em;
+  min-width: 70px; text-align: right;
+}
+
+.sidebar {
+  background: rgba(14,34,24,0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  padding: 1.5rem 1rem;
+  display: flex; flex-direction: column; gap: 6px;
+  overflow-y: auto;
+}
+
+.sidebar-section-label {
+  font-size: 10px; color: var(--text-muted);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0 10px; margin: 12px 0 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+  text-decoration: none; color: var(--text-secondary);
+  font-size: 13px; font-weight: 400;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(29,184,99,0.12), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+
+.nav-item:hover { color: var(--text-primary); border-color: var(--glass-border); }
+.nav-item:hover::before { opacity: 1; }
+.nav-item:hover .nav-icon { box-shadow: 0 0 12px rgba(29,184,99,0.3); }
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(13,122,69,0.25), rgba(29,184,99,0.08));
+  border-color: rgba(29,184,99,0.3);
+  color: var(--text-primary);
+}
+.nav-item.active::before { opacity: 1; }
+.nav-item.active .nav-icon { background: var(--green-mid); box-shadow: 0 0 14px rgba(13,122,69,0.5); }
+
+.nav-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: var(--transition);
+}
+
+.nav-label { flex: 1; line-height: 1.3; }
+.nav-sublabel { font-size: 10px; color: var(--text-muted); display: block; margin-top: 1px; }
+
+.nav-badge {
+  font-size: 9px; background: var(--green-mid); color: #fff;
+  padding: 2px 6px; border-radius: 20px; font-weight: 600;
+}
+
+.active-bar {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; background: var(--green-glow);
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px var(--green-glow);
+}
+
+.sidebar-footer {
+  margin-top: auto; padding: 12px 10px;
+  border-top: 1px solid var(--glass-border);
+}
+.apia-badge {
+  font-size: 10px; color: var(--text-muted); text-align: center;
+  line-height: 1.6;
+}
+.apia-badge span { color: var(--gold); }
+
+.main {
+  overflow-y: auto; overflow-x: hidden;
+  padding: 2rem 2.5rem;
+  scroll-behavior: smooth;
+}
+
+.main::-webkit-scrollbar { width: 4px; }
+.main::-webkit-scrollbar-track { background: transparent; }
+.main::-webkit-scrollbar-thumb { background: rgba(29,184,99,0.2); border-radius: 4px; }
+
+.page { display: none; animation: pageIn 0.4s ease forwards; }
+.page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header { margin-bottom: 2rem; }
+.page-eyebrow {
+  font-size: 11px; color: var(--green-glow);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+}
+.page-eyebrow::before {
+  content: ''; width: 20px; height: 1px;
+  background: var(--green-glow);
+}
+.page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+.page-desc { font-size: 14px; color: var(--text-secondary); margin-top: 8px; line-height: 1.6; max-width: 560px; }
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+.glass-card:hover {
+  border-color: rgba(29,184,99,0.25);
+  background: var(--glass-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(29,184,99,0.1);
+}
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 2rem;
+}
+
+.stat-card { padding: 1.25rem 1.5rem; }
+
+.stat-card-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(13,122,69,0.3), rgba(29,184,99,0.1));
+  border: 1px solid rgba(29,184,99,0.2);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.stat-value {
+  font-size: 26px; font-weight: 700;
+  background: linear-gradient(90deg, var(--text-primary), var(--green-glow));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1;
+}
+.stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.stat-trend {
+  font-size: 11px; color: var(--green-glow);
+  margin-top: 8px; display: flex; align-items: center; gap: 4px;
+}
+
+.features-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-bottom: 2rem;
+}
+
+.feature-card { padding: 1.5rem; cursor: pointer; }
+.feature-card:hover .fc-arrow { transform: translateX(4px); opacity: 1; }
+
+.fc-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1rem; position: relative;
+}
+.fc-icon::after {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: 15px; border: 1px solid rgba(29,184,99,0.2);
+}
+
+.fc-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.fc-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.fc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; }
+.fc-tag {
+  font-size: 10px; padding: 3px 8px; border-radius: 20px;
+  background: rgba(29,184,99,0.1); border: 1px solid rgba(29,184,99,0.2);
+  color: var(--green-glow); font-weight: 500;
+}
+.fc-arrow { color: var(--green-glow); font-size: 14px; transition: var(--transition); opacity: 0.5; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: none; font-family: 'Outfit', sans-serif;
+  transition: var(--transition); position: relative; overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn:hover::after { opacity: 1; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--green-mid), var(--green-glow));
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(29,184,99,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:hover { box-shadow: 0 6px 25px rgba(29,184,99,0.45); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-secondary);
+}
+.btn-ghost:hover { border-color: rgba(29,184,99,0.3); color: var(--text-primary); }
+
+.idea-layout {
+  display: grid; grid-template-columns: 360px 1fr; gap: 16px;
+}
+
+.form-group { margin-bottom: 1.25rem; }
+.form-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: block; letter-spacing: 0.03em; }
+
+.form-select, .form-input {
+  width: 100%; padding: 11px 16px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 13px;
+  font-family: 'Outfit', sans-serif;
+  transition: var(--transition); appearance: none;
+  -webkit-appearance: none;
+}
+.form-select:focus, .form-input:focus {
+  outline: none; border-color: var(--green-mid);
+  box-shadow: 0 0 0 3px rgba(13,122,69,0.2);
+  background: rgba(0,0,0,0.35);
+}
+option { background: #0a1a0d; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg); color: var(--text-secondary);
+  transition: var(--transition); user-select: none;
+}
+.chip:hover { border-color: rgba(29,184,99,0.3); color: var(--text-primary); }
+.chip.selected {
+  background: rgba(13,122,69,0.25); border-color: rgba(29,184,99,0.4);
+  color: var(--green-glow); box-shadow: 0 0 8px rgba(29,184,99,0.15);
+}
+
+.result-panel { display: flex; flex-direction: column; gap: 12px; }
+
+.result-placeholder {
+  border-radius: var(--radius);
+  border: 1px dashed rgba(29,184,99,0.15);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 400px; gap: 12px;
+  color: var(--text-muted); font-size: 13px;
+}
+
+.result-content { display: none; }
+.result-content.show { display: block; animation: pageIn 0.4s ease; }
+
+.result-header {
+  padding: 1.5rem; border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(135deg, rgba(13,122,69,0.2), rgba(29,184,99,0.05));
+  border: 1px solid rgba(29,184,99,0.2); border-bottom: none;
+}
+.result-body {
+  padding: 1.5rem;
+  border: 1px solid rgba(29,184,99,0.15); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: rgba(255,255,255,0.05);
+}
+.result-tag {
+  font-size: 10px; color: var(--gold); background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.2); padding: 3px 8px; border-radius: 20px;
+  display: inline-block; margin-bottom: 10px;
+}
+.result-project-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.result-subtitle { font-size: 13px; color: var(--text-secondary); }
+
+.result-metrics {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 1rem 0;
+}
+.rm { background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); padding: 10px 12px; }
+.rm-label { font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
+.rm-val { font-size: 14px; font-weight: 600; color: var(--green-glow); }
+
+.map-container { display: grid; grid-template-columns: 260px 1fr; gap: 14px; }
+
+.map-legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  cursor: pointer; transition: var(--transition);
+  font-size: 12px; color: var(--text-secondary);
+}
+.legend-item:hover { border-color: rgba(29,184,99,0.25); color: var(--text-primary); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.embed-frame {
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  overflow: hidden; position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  min-height: 500px;
+}
+
+.embed-inner {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 500px; padding: 3rem; text-align: center;
+}
+
+.embed-visual {
+  width: 80px; height: 80px; border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem; position: relative;
+}
+.embed-visual::before {
+  content: '';
+  position: absolute; inset: -8px; border-radius: 30px;
+  border: 1px dashed rgba(29,184,99,0.25);
+  animation: spin 20s linear infinite;
+}
+
+.embed-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.embed-desc { font-size: 13px; color: var(--text-secondary); max-width: 380px; line-height: 1.6; margin-bottom: 1.5rem; }
+
+/* RTL */
+[dir="rtl"] { font-family: 'Tajawal', 'Outfit', sans-serif; }
+[dir="rtl"] .page-eyebrow::before { content: none; }
+[dir="rtl"] .page-eyebrow::after { content: ''; width: 20px; height: 1px; background: var(--green-glow); }
+[dir="rtl"] .nav-item { text-align: right; flex-direction: row-reverse; }
+[dir="rtl"] .nav-item .nav-label { text-align: right; }
+[dir="rtl"] .active-bar { left: auto; right: 0; border-radius: 3px 0 0 3px; }
+[dir="rtl"] .topbar-right { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .sidebar { border-right: none; border-left: 1px solid var(--glass-border); }
+[dir="rtl"] .page-header { text-align: right; }
+[dir="rtl"] .page-eyebrow { flex-direction: row-reverse; justify-content: flex-end; }
+[dir="rtl"] .stat-card { text-align: right; }
+[dir="rtl"] .stat-trend { flex-direction: row-reverse; justify-content: flex-end; }
+[dir="rtl"] .feature-card { direction: rtl; }
+[dir="rtl"] .fc-footer { flex-direction: row-reverse; }
+[dir="rtl"] .fc-arrow { transform: scaleX(-1); }
+[dir="rtl"] .feature-card:hover .fc-arrow { transform: scaleX(-1) translateX(4px); }
+[dir="rtl"] .idea-layout { direction: rtl; }
+[dir="rtl"] .form-group { text-align: right; }
+[dir="rtl"] .result-header { text-align: right; }
+[dir="rtl"] .result-body { text-align: right; direction: rtl; }
+[dir="rtl"] .map-container { direction: rtl; }
+[dir="rtl"] .top-status { flex-direction: row-reverse; }
+[dir="rtl"] .lang-toggle { direction: ltr; }
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(29,184,99,0.15); border-radius: 4px; }
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.generating {
+  background: linear-gradient(90deg, var(--glass-bg) 25%, rgba(29,184,99,0.08) 50%, var(--glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Embed wrapper for Tableau iframes */
+.embed-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.embed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+}
+.embed-toolbar-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.embed-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+.embed-toolbar-actions .btn {
+  padding: 6px 14px;
+  font-size: 11px;
+}
+.embed-iframe-container {
+  width: 100%;
+  background: var(--dark-2);
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 20px 20px;
+}
+.embed-iframe-dashboard {
+  height: 95vh;
+  min-height: 520px;
+  max-height: 800px;
+}
+.embed-iframe-indicateurs {
+  height: 200vh;
+  min-height: 520px;
+  max-height: 1330px;
+}
+.embed-iframe-container iframe {
+  border: none;
+}
+.embed-footer-note {
+  margin-top: 1rem;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* PDF Modal */
+.pdf-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+.pdf-modal.show { display: flex; }
+.pdf-modal-inner {
+  background: #fff;
+  width: 90%;
+  max-width: 1100px;
+  height: 90%;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.pdf-modal-close {
+  position: absolute;
+  top: 15px; right: 15px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+}
+.pdf-modal iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+/* ═══════════════════════════════════════════════════
+   ANALYSE STATISTIQUE — Page styles
+   ═══════════════════════════════════════════════════ */
+.analysis-shell {
+  display: grid;
+  grid-template-columns: minmax(300px, 28%) 1fr;
+  gap: 16px;
+  height: calc(100vh - 220px);
+  min-height: 560px;
+}
+
+.analysis-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.analysis-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+.analysis-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+.analysis-card-half { flex: 1 1 50%; }
+
+.analysis-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-glow);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(29,184,99,0.25);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+/* Filters */
+.analysis-filter-group { margin-bottom: 14px; }
+.analysis-filter-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+.analysis-filter-group select {
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  transition: var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+}
+.analysis-filter-group select:focus {
+  outline: none;
+  border-color: var(--green-mid);
+  box-shadow: 0 0 0 3px rgba(13,122,69,0.2);
+  background: rgba(0,0,0,0.35);
+}
+
+.analysis-range {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.analysis-range-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--green-glow);
+  font-weight: 600;
+}
+.analysis-range input[type="range"] {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+.analysis-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--green-glow);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(58,224,127,0.5);
+  border: 2px solid var(--dark);
+}
+.analysis-range input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--green-glow);
+  cursor: pointer;
+  border: 2px solid var(--dark);
+}
+
+.analysis-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-glow));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+  transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(29,184,99,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.analysis-export-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(29,184,99,0.45);
+}
+
+/* Custom analysis (Drag & Drop) */
+.analysis-custom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.analysis-custom-col {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.analysis-custom-col::-webkit-scrollbar { width: 4px; }
+.analysis-custom-col::-webkit-scrollbar-thumb { background: rgba(29,184,99,0.2); border-radius: 4px; }
+
+.analysis-col-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.analysis-variable {
+  background: rgba(29,184,99,0.12);
+  border: 1px solid rgba(29,184,99,0.25);
+  color: var(--text-primary);
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: grab;
+  font-size: 11px;
+  text-align: center;
+  transition: var(--transition);
+  width: fit-content;
+  user-select: none;
+}
+.analysis-variable:hover {
+  background: rgba(29,184,99,0.22);
+  border-color: rgba(58,224,127,0.5);
+  transform: translateX(-3px);
+  box-shadow: 0 0 10px rgba(29,184,99,0.2);
+}
+.analysis-variable:active { cursor: grabbing; }
+
+.analysis-drop-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+.analysis-drop-item h4 {
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--green-glow);
+  letter-spacing: 0.04em;
+}
+
+.analysis-dropzone {
+  min-height: 38px;
+  border: 1.5px dashed rgba(29,184,99,0.3);
+  border-radius: var(--radius-sm);
+  padding: 5px;
+  background: rgba(0,0,0,0.15);
+  transition: var(--transition);
+}
+.analysis-dropzone.drag-over {
+  background: rgba(29,184,99,0.15);
+  border-color: var(--green-glow);
+  border-style: solid;
+}
+
+.analysis-drop-badge {
+  background: linear-gradient(135deg, rgba(13,122,69,0.4), rgba(29,184,99,0.2));
+  border: 1px solid rgba(29,184,99,0.4);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.analysis-delete-btn {
+  background: rgba(231,76,60,0.8);
+  color: white;
+  border: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.analysis-delete-btn:hover {
+  background: #e74c3c;
+  transform: scale(1.1);
+}
+
+/* Output toggle */
+.analysis-output-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.analysis-output-toggle button {
+  padding: 5px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  cursor: pointer;
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  transition: var(--transition);
+  letter-spacing: 0.04em;
+}
+.analysis-output-toggle button:hover {
+  color: var(--text-primary);
+  border-color: rgba(29,184,99,0.3);
+}
+.analysis-output-toggle button.active {
+  background: linear-gradient(135deg, var(--green-mid), var(--green-glow));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 10px rgba(29,184,99,0.3);
+}
+
+/* Chart containers */
+.analysis-chart-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+}
+#mainChart, #dynamicCanvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#dynamicTable {
+  height: 100%;
+  overflow: auto;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+#dynamicTable::-webkit-scrollbar { width: 4px; }
+#dynamicTable::-webkit-scrollbar-thumb { background: rgba(29,184,99,0.2); border-radius: 4px; }
+#dynamicTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+#dynamicTable th,
+#dynamicTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: center;
+  font-size: 11px;
+}
+#dynamicTable th {
+  background: linear-gradient(135deg, rgba(13,122,69,0.5), rgba(29,184,99,0.3));
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+}
+#dynamicTable td {
+  color: var(--text-primary);
+}
+#dynamicTable tr:hover td {
+  background: rgba(29,184,99,0.06);
+}
+
+/* RTL adjustments */
+[dir="rtl"] .analysis-card-title { text-align: right; }
+[dir="rtl"] .analysis-filter-group { text-align: right; }
+[dir="rtl"] .analysis-col-title { text-align: right; }
+[dir="rtl"] .analysis-variable:hover { transform: translateX(3px); }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .analysis-shell {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .analysis-card-half { min-height: 360px; }
+}
+/* Map Interactive Layout */
+.map-interactive-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  height: calc(100vh - 220px);
+  min-height: 560px;
+}
+
+.map-area {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tn-map-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tn-svg-map {
+  width: 100%;
+  height: 100%;
+  max-width: 600px;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+}
+
+/* Governorate Paths */
+.gov-path {
+  fill: url(#grad-default);
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gov-path:hover {
+  fill: rgba(58,224,127,0.4);
+  stroke: var(--green-glow);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 10px rgba(58,224,127,0.4));
+  transform: scale(1.01);
+  transform-origin: center;
+}
+
+.gov-path.active {
+  fill: url(#grad-active) !important;
+  stroke: var(--green-glow);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 15px rgba(58,224,127,0.6));
+}
+
+.gov-path.highlighted {
+  fill: url(#grad-highlight) !important;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 12px rgba(212,182,97,0.5));
+  animation: pulse-map 2s infinite;
+}
+
+@keyframes pulse-map {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.gov-path.dimmed {
+  opacity: 0.3;
+  filter: grayscale(0.5);
+}
+
+/* Labels */
+.gov-label {
+  font-size: 11px;
+  fill: rgba(255,255,255,0.9);
+  font-weight: 600;
+  text-anchor: middle;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Detail Panel */
+.map-detail-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  max-height: 40%;
+  overflow-y: auto;
+  padding: 20px;
+  z-index: 10;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.close-detail {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(231,76,60,0.8);
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.map-detail-panel h3 {
+  color: var(--green-glow);
+  margin-bottom: 12px;
+  font-size: 18px;
+  padding-right: 20px;
+  border-bottom: 2px solid var(--green-mid);
+  padding-bottom: 8px;
+}
+
+.opportunity-list-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opp-item {
+  background: rgba(0,0,0,0.2);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border-right: 3px solid var(--gold);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Sidebar (same as before) */
+.map-sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  height: 100%;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-header h3 {
+  font-size: 14px;
+  color: var(--gold);
+  margin: 0;
+}
+
+.opportunities-cloud {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.opp-chip {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+  line-height: 1.4;
+  position: relative;
+  overflow: hidden;
+}
+
+.opp-chip:hover {
+  background: rgba(29,184,99,0.12);
+  border-color: rgba(29,184,99,0.3);
+  transform: translateX(-4px);
+}
+
+.opp-chip.active {
+  background: linear-gradient(135deg, rgba(212,182,97,0.2), rgba(212,182,97,0.05));
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.opp-chip .count-badge {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.3);
+  color: var(--green-glow);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* RTL Support */
+[dir="rtl"] .map-interactive-layout { direction: rtl; }
+[dir="rtl"] .map-detail-panel h3 { 
+  padding-right: 0; 
+  padding-left: 20px; 
+  border-right: none; 
+  border-left: 2px solid var(--green-mid);
+  text-align: right;
+}
+[dir="rtl"] .opp-item { border-right: none; border-left: 3px solid var(--gold); }
+[dir="rtl"] .opp-chip { text-align: right; }
+[dir="rtl"] .opp-chip .count-badge { left: auto; right: 8px; }
+[dir="rtl"] .opp-chip:hover { transform: translateX(4px); }
+
+@media (max-width: 900px) {
+  .map-interactive-layout { grid-template-columns: 1fr; height: auto; }
+  .map-sidebar { height: 400px; }
+  .tn-svg-map { max-width: 100%; }
+}
+/* ═══════════════════════════════════════════════════
+   LEAFLET MAP INTEGRATION - DARK THEME
+   ═══════════════════════════════════════════════════ */
+
+.map-interactive-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  height: calc(100vh - 220px);
+  min-height: 560px;
+}
+
+/* Map Container (Glass) */
+.map-area-glass {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.map-area-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+.map-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 13px;
+  color: var(--text-secondary);
+  z-index: 2;
+}
+
+.map-title-bar span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Leaflet Container */
+.leaflet-map-container {
+  flex: 1;
+  border-radius: var(--radius-sm);
+  background: #0a1a0f; /* Dark base for map */
+  overflow: hidden;
+  border: 1px solid rgba(29,184,99,0.15);
+  position: relative;
+  z-index: 1;
+}
+
+/* Override Leaflet Default Styles for Dark Theme */
+.leaflet-map-container .leaflet-container {
+  background: #0a1a0f !important;
+}
+
+.leaflet-map-container .leaflet-popup-content-wrapper {
+  background: rgba(14,34,24,0.95);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  backdrop-filter: blur(12px);
+}
+
+.leaflet-map-container .leaflet-popup-tip {
+  background: rgba(14,34,24,0.95);
+  border: 1px solid var(--glass-border);
+}
+
+/* Custom Circle Styles */
+.investment-circle {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.investment-circle:hover {
+  stroke: var(--green-glow);
+  stroke-width: 3;
+  fill-opacity: 0.9;
+  filter: drop-shadow(0 0 10px rgba(58,224,127,0.5));
+}
+
+.investment-circle.highlighted {
+  stroke: var(--gold);
+  fill: rgba(212,182,97,0.6);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 15px rgba(212,182,97,0.4));
+  animation: pulse-gold-map 2s infinite;
+}
+
+.investment-circle.dimmed {
+  opacity: 0.2;
+  fill: #555;
+  stroke: #333;
+}
+
+@keyframes pulse-gold-map {
+  0%, 100% { stroke-opacity: 1; fill-opacity: 0.6; }
+  50% { stroke-opacity: 0.7; fill-opacity: 0.4; }
+}
+
+/* Custom Tooltip (Gov Name on Hover) */
+.map-tooltip-custom {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--green-glow) !important;
+  font-family: 'Tajawal', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+  direction: rtl;
+}
+
+/* Floating Toast (Glass) */
+.gov-toast {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  width: 340px;
+  max-height: 400px;
+  z-index: 1000;
+  border: 1px solid rgba(29,184,99,0.3);
+  animation: slideInToast 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideInToast {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.toast-header-glass {
+  background: linear-gradient(135deg, rgba(13,122,69,0.4), rgba(29,184,99,0.2));
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(29,184,99,0.2);
+}
+
+.toast-header-glass h4 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.toast-close-btn {
+  background: rgba(231,76,60,0.8);
+  color: white;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.toast-close-btn:hover {
+  background: #e74c3c;
+  transform: scale(1.1);
+}
+
+.toast-body-glass {
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 300px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.toast-body-glass ul {
+  margin: 0;
+  padding-right: 18px;
+  list-style: none;
+}
+
+.toast-body-glass li {
+  margin-bottom: 10px;
+  padding-right: 10px;
+  border-right: 2px solid var(--green-mid);
+  position: relative;
+}
+
+.toast-body-glass li::before {
+  content: '•';
+  color: var(--green-glow);
+  position: absolute;
+  right: -5px;
+  font-weight: bold;
+}
+
+/* Sidebar (Glass) */
+.map-sidebar-glass {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-header-glass {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-header-glass h3 {
+  font-size: 14px;
+  color: var(--gold);
+  margin: 0;
+  font-weight: 600;
+}
+
+.opp-count-badge {
+  background: rgba(29,184,99,0.15);
+  color: var(--green-glow);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(29,184,99,0.25);
+}
+
+.opportunities-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Opportunity Card */
+.opp-card-glass {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.opp-card-glass:hover {
+  background: rgba(29,184,99,0.1);
+  border-color: rgba(29,184,99,0.3);
+  transform: translateX(-4px);
+}
+
+.opp-card-glass.active {
+  background: linear-gradient(135deg, rgba(212,182,97,0.15), rgba(201,168,76,0.05));
+  border-color: var(--gold);
+}
+
+.opp-card-glass::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--green-mid);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.opp-card-glass:hover::before,
+.opp-card-glass.active::before {
+  opacity: 1;
+}
+
+.opp-card-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 0;
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.opp-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.opp-card-count {
+  background: rgba(29,184,99,0.15);
+  color: var(--green-glow);
+  padding: 0px 0px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.sidebar-footer-hint {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* RTL Support */
+[dir="rtl"] .map-interactive-layout {
+  direction: rtl;
+}
+
+[dir="rtl"] .gov-toast {
+  left: auto;
+  right: 20px;
+  animation-name: slideInToastRTL;
+}
+
+@keyframes slideInToastRTL {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+[dir="rtl"] .toast-body-glass ul {
+  padding-right: 0;
+  padding-left: 18px;
+}
+
+[dir="rtl"] .toast-body-glass li {
+  border-right: none;
+  border-left: 2px solid var(--green-mid);
+  padding-right: 0;
+  padding-left: 10px;
+}
+
+[dir="rtl"] .opp-card-glass:hover {
+  transform: translateX(4px);
+}
+
+[dir="rtl"] .opp-card-glass::before {
+  left: auto;
+  right: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .map-interactive-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  
+  .map-area-glass {
+    min-height: 500px;
+  }
+  
+  .gov-toast {
+    width: calc(100% - 40px);
+    max-width: 340px;
+  }
+  
+  .map-sidebar-glass {
+    max-height: 400px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="shell" id="appShell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 3L5 7v5.5l6 3.5 6-3.5V7L11 3z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.8)" stroke-width="1"/>
+          <circle cx="11" cy="11" r="3" fill="rgba(255,255,255,0.9)"/>
+          <circle cx="11" cy="11" r="1.2" fill="#0d7a45"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">APIA SmartAgri AI</div>
+        <div class="brand-sub" id="brand-sub">Plateforme Intelligente d'Investissement Agricole</div>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="top-status">
+        <div class="status-dot"></div>
+        <span id="statusText">Système opérationnel · Données 2025</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="fr">FR</button>
+        <button class="lang-btn" data-lang="ar">عربي</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <div class="time-display" id="clock">--:--</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label" id="label-main">Principal</div>
+
+    <button class="nav-item active" data-page="home">
+      <div class="active-bar"></div>
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L2 6v8h4V9h4v5h4V6L8 2z" fill="rgba(29,184,99,0.9)"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-home">Accueil</span>
+        <span class="nav-sublabel" id="nav-home-sub">Vue d'ensemble</span>
+      </div>
+    </button>
+
+    <button class="nav-item" data-page="agent">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="3" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><circle cx="5" cy="8" r="1.5" fill="rgba(200,230,210,0.6)"/><circle cx="8" cy="8" r="1.5" fill="rgba(200,230,210,0.6)"/><circle cx="11" cy="8" r="1.5" fill="rgba(200,230,210,0.6)"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-agent">Assistant IA</span>
+        <span class="nav-sublabel">AI Agent</span>
+      </div>
+      <span class="nav-badge">IA</span>
+    </button>
+
+    <!-- ✅ REORDERED: Tools come before Analytics -->
+    <div class="sidebar-section-label" id="label-tools">Outils IA</div>
+
+    <button class="nav-item" data-page="ideas">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="4" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><path d="M6 10.5v1a2 2 0 0 0 4 0v-1" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-ideas">Idées Projets</span>
+      </div>
+      <span class="nav-badge">NEW</span>
+    </button>
+
+    <button class="nav-item" data-page="map">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C5.79 2 4 3.79 4 6c0 3.5 4 8 4 8s4-4.5 4-8c0-2.21-1.79-4-4-4z" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><circle cx="8" cy="6" r="1.5" stroke="rgba(200,230,210,0.6)" stroke-width="1"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-map">Carte Interactive</span>
+      </div>
+    </button>
+
+    <!-- ✅ REORDERED: Analytics now (analysis 4th stays), then dashboards 5th, indicators 6th -->
+    <div class="sidebar-section-label" id="label-analytics">Analytique</div>
+
+    <button class="nav-item" data-page="analysis">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 14h12M3 11l3-4 3 2 4-6" stroke="rgba(200,230,210,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="6" cy="7" r="1.2" fill="rgba(200,230,210,0.6)"/>
+          <circle cx="9" cy="9" r="1.2" fill="rgba(200,230,210,0.6)"/>
+          <circle cx="13" cy="3" r="1.2" fill="rgba(200,230,210,0.6)"/>
+        </svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-analysis">Analyse Statistique</span>
+      </div>
+      <span class="nav-badge">PRO</span>
+    </button>
+
+    <button class="nav-item" data-page="dashboards">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="9" rx="1.5" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><rect x="9" y="1" width="6" height="5" rx="1.5" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><rect x="1" y="12" width="6" height="3" rx="1.5" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/><rect x="9" y="8" width="6" height="7" rx="1.5" stroke="rgba(200,230,210,0.6)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-dash">Dashboards</span>
+      </div>
+    </button>
+
+    <button class="nav-item" data-page="indicators">
+      <div class="nav-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="1,13 4,7 8,10 12,4 15,6" stroke="rgba(200,230,210,0.6)" stroke-width="1.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </div>
+      <div class="nav-label">
+        <span id="nav-indic">Indicateurs</span>
+      </div>
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="apia-badge">
+        <span>APIA</span> — Agence de Promotion des Investissements Agricoles
+        <br><span>Riadh Kouki<br>kouki.riadh@apia.com.tn</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="page-header">
+        <div class="page-eyebrow" id="home-eyebrow">Tableau de bord principal</div>
+        <div class="page-title" id="home-title">Bienvenue sur APIA SmartAgri AI</div>
+        <div class="page-desc" id="home-desc">La plateforme d'intelligence agricole pour explorer, analyser et investir dans l'agriculture tunisienne.</div>
+      </div>
+
+      <div class="features-grid">
+        <div class="glass-card feature-card" data-target="agent">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(13,122,69,0.3),rgba(29,184,99,0.1));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="4" stroke="rgba(29,184,99,0.9)" stroke-width="1.5"/><circle cx="8" cy="12" r="2" fill="rgba(29,184,99,0.7)"/><circle cx="12" cy="12" r="2" fill="rgba(29,184,99,0.7)"/><circle cx="16" cy="12" r="2" fill="rgba(29,184,99,0.7)"/></svg></div>
+          <div class="fc-title" id="fc1-title">Assistant IA Agricole</div>
+          <div class="fc-desc" id="fc1-desc">Posez vos questions sur l'investissement, la réglementation et les opportunités agricoles en Tunisie.</div>
+          <div class="fc-footer"><span class="fc-tag">Ai Agent</span><span class="fc-arrow">→</span></div>
+        </div>
+        <div class="glass-card feature-card" data-target="ideas">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(29,184,99,0.2),rgba(13,122,69,0.05));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" stroke="rgba(29,184,99,0.9)" stroke-width="1.5"/><path d="M9 14.5v2a3 3 0 0 0 6 0v-2" stroke="rgba(29,184,99,0.9)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="fc-title" id="fc2-title">Générateur de Projets IA</div>
+          <div class="fc-desc" id="fc2-desc">Obtenez une idée de projet personnalisée avec étude complète selon votre région et budget.</div>
+          <div class="fc-footer"><span class="fc-tag" style="background:rgba(29,184,99,0.15);border-color:rgba(29,184,99,0.3)">Nouveau ✦</span><span class="fc-arrow">→</span></div>
+        </div>
+        <div class="glass-card feature-card" data-target="map">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(46,204,113,0.15),rgba(5,74,41,0.1));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3C8.69 3 6 5.69 6 9c0 5 6 12 6 12s6-7 6-12c0-3.31-2.69-6-6-6z" stroke="rgba(29,184,99,0.9)" stroke-width="1.5"/><circle cx="12" cy="9" r="2.5" stroke="rgba(29,184,99,0.9)" stroke-width="1.2"/></svg></div>
+          <div class="fc-title" id="fc3-title">Carte Interactive</div>
+          <div class="fc-desc" id="fc3-desc">Visualisez les opportunités d'investissement par gouvernorat sur la carte de la Tunisie.</div>
+          <div class="fc-footer"><span class="fc-tag">Tableau Map</span><span class="fc-arrow">→</span></div>
+        </div>
+        <div class="glass-card feature-card" data-target="analysis">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(29,184,99,0.2),rgba(13,122,69,0.05));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" stroke="rgba(29,184,99,0.9)" stroke-width="1.5"/><path d="M9 14.5v2a3 3 0 0 0 6 0v-2" stroke="rgba(29,184,99,0.9)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="fc-title" id="fc4-title">َAnalyse Statistique</div>
+          <div class="fc-desc" id="fc4-desc">Explorez les investissements agricoles avec des filtres dynamiques et créez vos propres analyses par glisser-déposer.</div>
+          <div class="fc-footer"><span class="fc-tag" style="background:rgba(29,184,99,0.15);border-color:rgba(29,184,99,0.3)">Nouveau ✦</span><span class="fc-arrow">→</span></div>
+        </div>
+        <div class="glass-card feature-card" data-target="dashboards">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(5,74,41,0.3),rgba(13,122,69,0.1));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="9" height="13" rx="2" stroke="rgba(29,184,99,0.8)" stroke-width="1.5"/><rect x="13" y="2" width="9" height="7" rx="2" stroke="rgba(29,184,99,0.8)" stroke-width="1.5"/><rect x="2" y="17" width="9" height="5" rx="2" stroke="rgba(29,184,99,0.5)" stroke-width="1.5"/><rect x="13" y="11" width="9" height="11" rx="2" stroke="rgba(29,184,99,0.8)" stroke-width="1.5"/></svg></div>
+          <div class="fc-title" id="fc5-title">Dashboards Sectoriels</div>
+          <div class="fc-desc" id="fc5-desc">Tableaux de bord interactifs par filière et par région, développés sur Tableau Public.</div>
+          <div class="fc-footer"><span class="fc-tag">Tableau Public</span><span class="fc-arrow">→</span></div>
+        </div>
+        <div class="glass-card feature-card" data-target="indicators">
+          <div class="fc-icon" style="background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.05));"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><polyline points="3,18 7,10 12,14 17,6 21,9" stroke="rgba(201,168,76,0.9)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="10" r="2" fill="rgba(201,168,76,0.7)"/><circle cx="17" cy="6" r="2" fill="rgba(201,168,76,0.7)"/></svg></div>
+          <div class="fc-title" id="fc6-title">Indicateurs Clés</div>
+          <div class="fc-desc" id="fc6-desc">Suivi en temps réel des KPIs d'investissement agricole, production et export par gouvernorat.</div>
+          <div class="fc-footer"><span class="fc-tag" style="background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.2);color:var(--gold)">KPIs Live</span><span class="fc-arrow">→</span></div>
+        </div>
+
+
+        
+      </div>
+    </div>
+    <!-- ASSISTANT IA -->
+    <div id="page-agent" class="page">
+      
+        <div class="page-header">
+        <div class="page-eyebrow" id="agent-eyebrow">Intelligence Artificielle</div>
+        <div class="page-title" id="agent-title">Assistant IA Agricole</div>
+      </div>
+
+      <div class="glass-card" style="width: 100%; height: 66vh; overflow: hidden; padding: 0;">
+
+       <iframe
+    src="https://smart-apia.streamlit.app/?embed=true&embed_options=dark_theme"
+    style="width: 100%; height: 75vh; border: none;"
+    allow="clipboard-read; clipboard-write"
+    title="APIA Expert Assistant">
+  </iframe>
+
+      </div>
+    </div>
+
+    <!-- IDÉES PROJETS -->
+    <div id="page-ideas" class="page">
+      <div class="page-header">
+        <div class="page-eyebrow" id="ideas-eyebrow">Outil IA · Génération de projets</div>
+        <div class="page-title" id="ideas-title">Générateur d'idées de projets agricoles</div>
+        <div class="page-desc" id="ideas-desc">Renseignez votre profil investisseur et obtenez une idée de projet personnalisée.</div>
+      </div>
+
+      <div class="idea-layout">
+        <div class="glass-card" style="padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;margin-bottom:1.25rem;color:var(--text-primary);" id="form-title-label">Votre profil</div>
+
+          <div class="form-group">
+            <label class="form-label" id="lbl-region">Gouvernorat cible</label>
+            <select class="form-select" id="sel-region">
+              <option value="">-- Choisir --</option>
+              <option>تونس</option><option>صفاقس</option><option>سوسة</option><option>القيروان</option>
+              <option>بنزرت</option><option>قابس</option><option>أريانة</option><option>قفصة</option>
+              <option>نابل</option><option>مدنين</option><option>المنستير</option><option>بن عروس</option>
+              <option>القصرين</option><option>سيدي بوزيد</option><option>جندوبة</option><option>الكاف</option>
+              <option>المهدية</option><option>سليانة</option><option>زغوان</option><option>باجة</option>
+              <option>قبلي</option><option>توزر</option><option>تطاوين</option><option>منوبة</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="lbl-budget">Budget disponible (DT)</label>
+            <select class="form-select" id="sel-budget">
+              <option value="">-- Choisir --</option>
+              <option>أقل من 60 ألف دينار</option>
+              <option>60 ألف دينار  --  200 ألف دينار</option>
+              <option>200 ألف دينار  -- 1  مليون دينار</option>
+              <option>1 مليون دينار  -- 2  مليون دينار</option>
+              <option>أكثر من 2 مليون دينار</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="lbl-interests">Centres d'intérêt</label>
+            <div class="chips" id="chips-container">
+              <span class="chip">الفلاحة</span>
+              <span class="chip">الصيد البحري</span>
+              <span class="chip">تربية الأحياء المائية</span>
+              <span class="chip">الخدمات المرتبطة بالنشاط الفلاحي والصيد البحري</span>
+              <span class="chip">التحويل الأولي لمنتجات الفلاحة والصيد البحري</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="lbl-exp">Expérience agricole</label>
+            <select class="form-select" id="sel-exp">
+              <option>Débutant</option>
+              <option>Intermédiaire</option>
+              <option>Expert</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" id="btn-generate">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#fff" stroke-width="1.2"/><path d="M5 7h4M7 5v4" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span id="btn-generate-text">Générer mon projet</span>
+          </button>
+        </div>
+        <div class="result-panel">
+          <div class="result-placeholder" id="result-placeholder">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="rgba(29,184,99,0.15)" stroke-width="1.5" stroke-dasharray="5 4"/><circle cx="20" cy="14" r="5" stroke="rgba(29,184,99,0.3)" stroke-width="1.2"/><path d="M13 28v-1a7 7 0 0 1 14 0v1" stroke="rgba(29,184,99,0.3)" stroke-width="1.2"/></svg>
+            <span id="placeholder-text">Remplissez le formulaire pour générer votre idée de projet</span>
+          </div>
+
+          <div class="result-content" id="result-content">
+            <div class="result-header">
+              <div class="result-tag" id="result-tag">Projet IA Généré</div>
+              <div class="result-project-name" id="result-name">–</div>
+              <div class="result-subtitle" id="result-sub">–</div>
+            </div>
+            <div class="result-body">
+              <div class="result-metrics">
+                <div class="rm">
+                  <div class="rm-label" id="rm1-label">Investissement estimé</div>
+                  <div class="rm-val" id="rm1-val">–</div>
+                </div>
+                <div class="rm">
+                  <div class="rm-label" id="rm2-label">Valeur totale de la prime</div>
+                  <div class="rm-val" id="rm2-val">–</div>
+                </div>
+                <div class="rm">
+                  <div class="rm-label" id="rm3-label">Délai de rentabilité</div>
+                  <div class="rm-val" id="rm3-val">–</div>
+                </div>
+              </div>
+              <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:1rem;" id="result-desc-text">–</div>
+              <div style="font-size:11px;color:var(--text-muted);padding:10px 14px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);border:1px solid var(--glass-border);" id="result-note">
+                ⓘ Ce projet est généré à titre indicatif. Contactez l'APIA pour une étude complète.
+              </div>
+              <div id="result-actions" style="margin-top:1rem;display:flex;gap:10px;flex-wrap:wrap;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+<!-- CARTE INTERACTIVE - TUNISIA MAP -->
+<div id="page-map" class="page">
+  <div class="page-header">
+    <div class="page-eyebrow" id="map-eyebrow">Géographie de l'investissement</div>
+    <div class="page-title" id="map-title">خريطة فرص الاستثمار الفلاحي</div>
+    <div class="page-desc" id="map-desc">اضغط على أي ولاية لعرض فرصها الاستثمارية، أو اختر فرصة من القائمة لترى توزيعها الجغرافي</div>
+  </div>
+
+  <div class="map-interactive-layout">
+    
+    <!-- LEFT: Map Area (Leaflet) -->
+    <div class="map-area-glass">
+      <div class="map-title-bar">
+        <span>🗺️ اضغط على الولاية لعرض التفاصيل</span>
+        <button class="btn btn-ghost btn-sm" onclick="resetMapView()" id="btn-reset-map" style="display:none;">
+          ✕ إلغاء التحديد
+        </button>
+      </div>
+      
+      <div id="tnLeafletMap" class="leaflet-map-container"></div>
+      
+      <!-- Floating Toast (Glass Style) -->
+      <div id="govToast" class="gov-toast glass-card" style="display:none;">
+        <div class="toast-header-glass">
+          <h4 id="toastTitle">📍 فرص الاستثمار</h4>
+          <button class="toast-close-btn" onclick="hideGovToast()">✕</button>
+        </div>
+        <div class="toast-body-glass" id="toastBody"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Opportunities Sidebar -->
+    <div class="map-sidebar-glass glass-card">
+      <div class="sidebar-header-glass">
+        <h3 id="sidebar-title">💡 فرص الاستثمار الرئيسية</h3>
+        <span class="opp-count-badge" id="oppCountBadge">24 فرصة</span>
+      </div>
+      
+      <div class="opportunities-scroll" id="opportunitiesList">
+        <!-- Injected by JS -->
+      </div>
+      
+      <div class="sidebar-footer-hint">
+        <span id="sidebar-hint">اختر فرصة لترى الولايات المتوفر بها</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ANALYSE STATISTIQUE -->
+<div id="page-analysis" class="page">
+  <div class="page-header">
+    <div class="page-eyebrow" id="analysis-eyebrow">Analyse avancée · Drag &amp; Drop</div>
+    <div class="page-title" id="analysis-title">Analyse Statistique Interactive</div>
+    <div class="page-desc" id="analysis-desc">Explorez les investissements agricoles avec des filtres dynamiques et créez vos propres analyses par glisser-déposer.</div>
+  </div>
+
+  <div class="analysis-shell">
+
+    <!-- LEFT COLUMN: Filters + Custom analysis -->
+    <div class="analysis-col">
+
+      <!-- Filters -->
+      <div class="analysis-card analysis-card-half">
+        <div class="analysis-card-title">📋 <span id="an-filters-title">Filtres des données</span></div>
+
+        <div class="analysis-filter-group">
+          <label id="an-lbl-sector">📂 Activité</label>
+          <select id="sectorFilter">
+            <option value="all" data-i18n="an-opt-all">Toutes les activités</option>
+            <option value="الفلاحة" data-i18n="an-opt-agri">الفلاحة</option>
+            <option value="الصيد البحري" data-i18n="an-opt-fish">الصيد البحري</option>
+            <option value="تربية الأحياء المائية" data-i18n="an-opt-aqua">تربية الأحياء المائية</option>
+            <option value="الخدمات الفلاحية" data-i18n="an-opt-services">الخدمات الفلاحية</option>
+            <option value="التحويل الأولي المندمج" data-i18n="an-opt-transform">التحويل الأولي المندمج</option>
+          </select>
+        </div>
+
+        <div class="analysis-filter-group">
+          <label id="an-lbl-years">📅 Période (années)</label>
+          <div class="analysis-range">
+            <div class="analysis-range-values">
+              <span id="yearStartLabel">2010</span>
+              <span id="yearEndLabel">2024</span>
+            </div>
+            <input type="range" id="yearStartSlider" min="2010" max="2024" value="2010" step="1">
+            <input type="range" id="yearEndSlider" min="2010" max="2024" value="2024" step="1">
+          </div>
+        </div>
+
+        <button class="analysis-export-btn" id="an-export-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v8m0 0L4 6m3 3l3-3M2 12h10" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span id="an-btn-export">Exporter en Excel</span>
+        </button>
+      </div>
+
+<!-- Custom analysis (Drag & Drop) -->
+      <div class="analysis-card analysis-card-half">
+        <div class="analysis-card-title">🎯 <span id="an-custom-title">Analyse personnalisée</span></div>
+        <div class="analysis-custom-row">
+
+          <div class="analysis-custom-col">
+            <div class="analysis-col-title" id="an-vars-title">📦 Variables</div>
+            <div class="analysis-variable" draggable="true" data-field="year" data-i18n="an-var-year">📅 السنة</div>
+            <div class="analysis-variable" draggable="true" data-field="declared_value" data-i18n="an-var-decl">💰 التصاريح</div>
+            <div class="analysis-variable" draggable="true" data-field="approved_value" data-i18n="an-var-appr">✅ المصادقات</div>
+            <div class="analysis-variable" draggable="true" data-field="subsidy" data-i18n="an-var-sub">🎁 المنح</div>
+            <div class="analysis-variable" draggable="true" data-field="jobs" data-i18n="an-var-jobs">👥 مواطن الشغل</div>
+            <div class="analysis-variable" draggable="true" data-field="sector" data-i18n="an-var-sector">🏷️ الأنشطة</div>
+          </div>
+
+          <div class="analysis-custom-col">
+            <div class="analysis-drop-item">
+              <h4 id="an-zone-x">📐 Axe X</h4>
+              <div id="zoneX" class="analysis-dropzone"></div>
+            </div>
+            <div class="analysis-drop-item">
+              <h4 id="an-zone-y">📊 Axe Y</h4>
+              <div id="zoneY" class="analysis-dropzone"></div>
+            </div>
+            <div class="analysis-drop-item">
+              <h4 id="an-zone-group">🎨 Groupement (optionnel)</h4>
+              <div id="zoneGroup" class="analysis-dropzone"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Charts -->
+    <div class="analysis-col">
+
+      <div class="analysis-card analysis-card-half">
+        <div class="analysis-card-title">📈 <span id="an-main-title">Évolution des investissements (déclaré / approuvé)</span></div>
+        <div class="analysis-chart-container">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+
+      <div class="analysis-card analysis-card-half">
+        <div class="analysis-card-title">🔄 <span id="an-result-title">Résultat de l'analyse personnalisée</span></div>
+        <div class="analysis-output-toggle">
+          <button id="btnChart" class="active" data-mode="chart">📈 <span id="an-btn-chart">Graphique</span></button>
+          <button id="btnTable" data-mode="table">📋 <span id="an-btn-table">Tableau</span></button>
+        </div>
+        <div class="analysis-chart-container">
+          <canvas id="dynamicCanvas" style="display: block;"></canvas>
+          <div id="dynamicTable" style="display: none;"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+    <!-- DASHBOARDS -->
+    <div id="page-dashboards" class="page">
+      <div class="page-header">
+        <div class="page-eyebrow" id="dash-eyebrow">Analyse & Visualisation</div>
+        <div class="page-title" id="dash-title">Dashboards Sectoriels</div>
+        <div class="page-desc" id="dash-desc">Tableaux de bord interactifs. Filtrez et explorez les données d'investissement agricole.</div>
+      </div>
+
+      <div class="glass-card embed-wrapper">
+        <div class="embed-toolbar">
+          <div class="embed-toolbar-info">
+            <span style="color:var(--green-glow);">●</span>
+            <span id="dash-data-label">Données mises à jour : 2025</span>
+          </div>
+          <div class="embed-toolbar-actions">
+            <button class="btn btn-ghost" id="dash-refresh-btn">↺ <span id="dash-btn-refresh">Actualiser</span></button>
+            <button class="btn btn-ghost" id="dash-fullscreen-btn">⛶ <span id="dash-btn-fullscreen">Plein écran</span></button>
+          </div>
+        </div>
+
+        <div id="dashboard-container" class="embed-iframe-container embed-iframe-dashboard">
+          <iframe
+            id="dashboard-iframe"
+            src="https://public.tableau.com/views/2025_17739181786380/Tableaudebord1?:embed=y&:showVizHome=no&:toolbar=no&:fit=width"
+            style="width:130%; height:130%; transform:scale(0.77); transform-origin: top left;"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <div class="embed-footer-note" id="dash-footer-note">
+        ✦ Dashboard interactif : utilisez les filtres pour explorer par gouvernorat, filière ou période.
+      </div>
+    </div>
+
+    <!-- INDICATEURS -->
+    <div id="page-indicators" class="page">
+      <div class="page-header">
+        <div class="page-eyebrow" id="indic-eyebrow">Suivi & Mesure</div>
+        <div class="page-title" id="indic-title">Indicateurs Clés de Performance</div>
+        <div class="page-desc" id="indic-desc">Suivez les KPIs stratégiques du secteur agricole tunisien.</div>
+      </div>
+
+      <div class="glass-card embed-wrapper">
+        <div class="embed-toolbar">
+          <div class="embed-toolbar-info">
+            <span style="color:var(--green-glow);">●</span>
+            <span id="indic-data-label">Données mises à jour : 2025</span>
+          </div>
+          <div class="embed-toolbar-actions">
+            <button class="btn btn-ghost" id="indic-refresh-btn">↺ <span id="indic-btn-refresh">Actualiser</span></button>
+            <button class="btn btn-ghost" id="indic-fullscreen-btn">⛶ <span id="indic-btn-fullscreen">Plein écran</span></button>
+          </div>
+        </div>
+
+        <div id="indicateurs-container" class="embed-iframe-container embed-iframe-indicateurs">
+          <iframe
+            id="indicateurs-iframe"
+            src="https://public.tableau.com/views/Indicateurs_17510405177100/Tableaudebord1?:embed=y&:showVizHome=no&:toolbar=no&:fit=width"
+            style="width:118%; height:118%; transform:scale(0.85); transform-origin: top left;"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <div class="embed-footer-note" id="indic-footer-note">
+        ✦ Indicateurs interactifs : utilisez les filtres pour explorer par gouvernorat, filière ou période.
+      </div>
+    </div>
+
+
+
+
+
+
+
+  </main>
+</div>
+
+<!-- PDF Modal -->
+<div id="pdf-modal" class="pdf-modal">
+  <div class="pdf-modal-inner">
+    <button class="pdf-modal-close" id="pdf-close-btn">✕</button>
+    <iframe id="pdf-frame" allowfullscreen></iframe>
+  </div>
+</div>
+
+
+
+<!-- External SDKs -->
+<script src="https://lf-cdn.coze.com/obj/unpkg/flow-platform/chat-app-sdk/1.3.0-beta.1/libs/cn/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script>
+'use strict';
+
+
+
+/* ═══════════════════════════════════════════════════
+   GLOBAL STATE
+   ═══════════════════════════════════════════════════ */
+const PAGES = ['home', 'agent', 'ideas', 'map', 'analysis', 'dashboards', 'indicators'];
+let currentLang = 'Fr';
+let cozeClient = null;
+let cozeReady = false;
+
+/* ═══════════════════════════════════════════════════
+   PROJECT DATA
+   ═══════════════════════════════════════════════════ */
+const PROJECTS = [
+  {
+    governorate: 'المنستير',
+    investment: 105000,
+    grant: '32439',
+    name: 'إنتاج الزهور المقطوفة',
+    components: 'اقتناء 6 بيوت حامية / اقتناء معدات ري قطرة قطرة وبالرش / اقتناء سيارة نفعية',
+    fileLink: 'https://www.apia.com.tn/medias/files/idees-projets/2018/veg1.pdf'
+  },
+  {
+    governorate: 'قابس',
+    investment: 171927,
+    grant: '60330',
+    name: 'غراسة الزياتين المروية وتربية الأبقار',
+    components: 'بناء مغازة ومسكن ريفي واسطبل للأبقار / احداث بئر سطحية واقتناء تجهيزات الري الموضعي / غراسة 2 هك زيتون زيت / اقتناء 8 أراخي / اقتناء جرار فلاحي / اقتناء تجهيزات وأوعية الحلب',
+    fileLink: 'https://www.apia.com.tn/medias/files/idees-projets/2018/veg2.pdf'
+  }
+];
+
+/* ═══════════════════════════════════════════════════
+   TRANSLATIONS
+   ═══════════════════════════════════════════════════ */
+const TRANSLATIONS = {
+  fr: {
+    'brand-sub': "Plateforme Intelligente d'Investissement Agricole",
+    'statusText': 'Système opérationnel · Données 2026',
+    'label-main': 'Principal',
+    'label-analytics': 'Analytique',
+    'label-tools': 'Outils IA',
+    'nav-home': 'Accueil',
+    'nav-home-sub': "Vue d'ensemble",
+    'nav-agent': 'Assistant IA',
+    'nav-dash': 'Dashboards',
+    'nav-indic': 'Indicateurs',
+    'nav-ideas': 'Idées Projets',
+    'nav-map': 'Carte Interactive',
+    'home-eyebrow': 'Tableau de bord principal',
+    'home-title': 'Bienvenue sur APIA SmartAgri AI',
+    'home-desc': "Veille informationnelle et intelligence artificielle au service de l'investissement agricole en Tunisie.",
+
+    'fc1-title': 'Assistant IA Agricole',
+    'fc1-desc': "Posez vos questions sur l'investissement, la réglementation et les opportunités agricoles en Tunisie.",
+    'fc2-title': 'Générateur de Projets IA',
+    'fc2-desc': 'Obtenez une idée de projet personnalisée avec étude complète selon votre région et budget.',
+    'fc3-title': 'Carte Interactive',
+    'fc3-desc': "Visualisez les opportunités d'investissement par gouvernorat sur la carte de la Tunisie.",
+    'fc4-title': 'Analyse Statistique',
+    'fc4-desc': 'Explorez les investissements agricoles avec des filtres dynamiques et créez vos propres analyses par glisser-déposer.',
+    'fc5-title': 'Dashboards Sectoriels',
+    'fc5-desc': 'Tableaux de bord interactifs par filière et par région, développés sur Tableau Public.',
+    'fc6-title': 'Indicateurs Clés',
+    'fc6-desc': "Suivi en temps réel des KPIs d'investissement agricole, production et export par gouvernorat.",
+
+    'agent-eyebrow': 'Intelligence Artificielle',
+    'agent-title': 'Assistant IA Agricole',
+    // 'agent-desc': 'Votre conseiller agricole intelligent disponible 24h/24.',
+    'dash-eyebrow': 'Analyse & Visualisation',
+    'dash-title': 'Dashboards Sectoriels',
+    'dash-desc': "Tableaux de bord interactifs. Filtrez et explorez les données d'investissement agricole.",
+    'dash-data-label': 'Données mises à jour : 2025',
+    'dash-btn-refresh': 'Actualiser',
+    'dash-btn-fullscreen': 'Plein écran',
+    'dash-footer-note': '✦ Dashboard interactif : utilisez les filtres pour explorer par gouvernorat, filière ou période.',
+    'indic-eyebrow': 'Suivi & Mesure',
+    'indic-title': 'Indicateurs Clés de Performance',
+    'indic-desc': 'Suivez les KPIs stratégiques du secteur agricole tunisien.',
+    'indic-data-label': 'Données mises à jour : 2025',
+    'indic-btn-refresh': 'Actualiser',
+    'indic-btn-fullscreen': 'Plein écran',
+    'indic-footer-note': '✦ Indicateurs interactifs : utilisez les filtres pour explorer par gouvernorat, filière ou période.',
+    'ideas-eyebrow': 'Outil IA · Génération de projets',
+    'ideas-title': "Générateur d'idées de projets agricoles",
+    'ideas-desc': 'Renseignez votre profil investisseur et obtenez une idée de projet personnalisée.',
+    'form-title-label': 'Votre profil',
+    'lbl-region': 'Gouvernorat cible',
+    'lbl-budget': 'Budget disponible (DT)',
+    'lbl-interests': "Centres d'intérêt",
+    'lbl-exp': 'Expérience agricole',
+    'btn-generate-text': 'Générer mon projet',
+    'placeholder-text': 'Remplissez le formulaire pour générer votre idée de projet',
+    'result-tag': 'Projet IA Généré',
+    'rm1-label': 'Investissement estimé',
+    'rm2-label': 'Valeur totale de la prime',
+    'rm3-label': 'Délai de rentabilité',
+    'result-note': "ⓘ Ce projet est généré à titre indicatif. Contactez l'APIA pour une étude complète.",
+    'map-eyebrow': "Géographie de l'investissement",
+    'map-title': 'Carte interactive — Tunisie agricole',
+    'map-desc': "Explorez les opportunités d'investissement par gouvernorat.",
+    'map-legend-title': 'Légende filières',
+    'leg1': 'Maraîchage',
+    'leg2': 'Arboriculture',
+    'leg3': 'Élevage',
+    'leg4': 'Agritech',
+    'leg5': 'Transformation',
+    'map-embed-title': "Carte Tableau — Prête à l'intégration",
+    'map-embed-desc': 'Intégrez votre carte Tableau Public ici.',
+'nav-analysis': 'Analyse Statistique',
+'analysis-eyebrow': 'Analyse avancée · Drag & Drop',
+'analysis-title': 'Analyse Statistique Interactive',
+'analysis-desc': "Explorez les investissements agricoles avec des filtres dynamiques et créez vos propres analyses par glisser-déposer.",
+'an-filters-title': 'Filtres des données',
+'an-lbl-sector': '📂 Activité',
+'an-lbl-years': '📅 Période (années)',
+'an-btn-export': 'Exporter en Excel',
+'an-custom-title': 'Analyse personnalisée',
+'an-vars-title': '📦 Variables',
+'an-zone-x': '📐 Axe X',
+'an-zone-y': '📊 Axe Y',
+'an-zone-group': '🎨 Groupement (optionnel)',
+'an-main-title': 'Évolution des investissements (déclaré / approuvé)',
+'an-result-title': "Résultat de l'analyse personnalisée",
+'an-btn-chart': 'Graphique',
+'an-btn-table': 'Tableau',
+'an-var-year': '📅 Année',
+'an-var-decl': '💰 Déclarations',
+'an-var-appr': '✅ Approbations',
+'an-var-sub': '🎁 Subventions',
+'an-var-jobs': '👥 Emplois',
+'an-var-sector': '🏷️ Activité',
+  },
+  ar: {
+    'brand-sub': 'منصة الذكاء الفلاحي للاستثمار',
+    'statusText': 'النظام يعمل - بيانات 2026',
+    'label-main': 'الرئيسية',
+    'label-analytics': 'التحليلات',
+    'label-tools': 'أفكار المشاريع',
+    'nav-home': 'الصفحة الرئيسية',
+    'nav-home-sub': 'نظرة عامة',
+    'nav-agent': 'المساعد الذكي',
+    'nav-dash': 'لوحات البيانات',
+    'nav-indic': 'المؤشرات',
+    'nav-ideas': 'أفكار المشاريع',
+    'nav-map': 'الخريطة التفاعلية',
+    'home-eyebrow': 'لوحة التحكم الرئيسية',
+    'home-title': 'مرحباً بكم في فضاء الذكاء الاصطناعي الفلاحي APIA SmartAgri AI',
+    'home-desc': 'منصة الذكاء الفلاحي لاستكشاف وتحليل الاستثمار الفلاحي التونسي.',
+
+    'fc1-title': 'المساعد الفلاحي الذكي',
+    'fc1-desc': 'اطرح استفساراتك حول الاستثمار الفلاحي في تونس وتحصل على الاجابة عبر نماذج الذكاء الاصطناعي.',
+    'fc2-title': 'مولّد أفكار المشاريع بالذكاء الاصطناعي',
+    'fc2-desc': 'احصل على فكرة مشروع مخصصة مع معطيات تقريبية حسب ولايتك وميزانيتك.',
+    'fc3-title': 'الخريطة التفاعلية',
+    'fc3-desc': 'اكتشف فرص الاستثمار حسب الولاية على خريطة تونس.',
+    'fc4-title': 'التحليل الاحصائي',
+    'fc4-desc': 'استكشف الاستثمارات الفلاحية بفلاتر ديناميكية وأنشئ تحليلاتك الخاصة عبر السحب والإفلات.',
+    'fc5-title': 'لوحات البيانات القطاعية',
+    'fc5-desc': 'لوحات تفاعلية حسب القطاع والولاية مطورة على Tableau Public.',
+    'fc6-title': 'المؤشرات الرئيسية',
+    'fc6-desc': 'متابعة لحظية لمؤشرات الاستثمار والإنتاج والتصدير حسب الولاية.',
+   
+    'agent-eyebrow': 'الذكاء الاصطناعي',
+    'agent-title': 'المساعد الفلاحي الذكي',
+   // 'agent-desc': 'aaa',
+    'dash-eyebrow': 'التحليل والعرض البصري',
+    'dash-title': 'لوحات البيانات القطاعية',
+    'dash-desc': 'لوحات بيانات تفاعلية. قم بالتصفية واستكشف بيانات الاستثمار الفلاحي.',
+    'dash-data-label': 'بيانات محدَّثة : 2025',
+    'dash-btn-refresh': 'تحديث',
+    'dash-btn-fullscreen': 'شاشة كاملة',
+    'dash-footer-note': '✦ لوحة بيانات تفاعلية : استخدم الفلاتر للاستكشاف حسب الولاية أو القطاع أو الفترة.',
+    'indic-eyebrow': 'المتابعة والقياس',
+    'indic-title': 'المؤشرات الرئيسية للأداء',
+    'indic-desc': 'تابع المؤشرات الإستراتيجية لقطاع الفلاحة في تونس.',
+    'indic-data-label': 'بيانات محدَّثة : 2025',
+    'indic-btn-refresh': 'تحديث',
+    'indic-btn-fullscreen': 'شاشة كاملة',
+    'indic-footer-note': '✦ مؤشرات تفاعلية : استخدم الفلاتر للاستكشاف حسب الولاية أو القطاع أو الفترة.',
+    'ideas-eyebrow': 'أداة ذكاء اصطناعي · توليد المشاريع',
+    'ideas-title': 'مولّد أفكار المشاريع الفلاحية',
+    'ideas-desc': 'عرّف ملفك الاستثماري لتحصل على فكرة مشروع تناسبك.',
+    'form-title-label': 'ملف المستثمر',
+    'lbl-region': 'ولاية المشروع',
+    'lbl-budget': 'الميزانية المتاحة (د.ت)',
+    'lbl-interests': 'القطاع',
+    'lbl-exp': 'الخبرة الفلاحية',
+    'btn-generate-text': 'توليد فكرة مشروع',
+    'placeholder-text': 'أكمل النموذج لتوليد فكرة مشروعك',
+    'result-tag': 'مشروع مولَّد بالذكاء الاصطناعي',
+    'rm1-label': 'الاستثمار التقديري',
+    'rm2-label': 'القيمة الجملية للمنحة',
+    'rm3-label': 'مدة استرجاع رأس المال',
+    'result-note': 'ⓘ هذا المشروع مقترح على سبيل المثال. يُنصح بالتواصل مع APIA لدراسة مفصَّلة.',
+    'map-eyebrow': 'الجغرافيا الاستثمارية',
+    'map-title': 'الخريطة التفاعلية لأفكار المشاريع — تونس الفلاحية',
+    'map-desc': 'استكشف فرص الاستثمار حسب الولاية.',
+    'map-legend-title': 'دليل القطاعات',
+    'leg1': 'الخضروات',
+    'leg2': 'الأشجار المثمرة',
+    'leg3': 'تربية الماشية',
+    'leg4': 'التقنيات الفلاحية',
+    'leg5': 'التحويل الصناعي الفلاحي',
+    'map-embed-title': 'خريطة Tableau — جاهزة للدمج',
+    'map-embed-desc': 'قم بدمج خريطتك من Tableau Public هنا.',
+'nav-analysis': 'التحليل الإحصائي',
+'analysis-eyebrow': 'تحليل متقدم · سحب وإفلات',
+'analysis-title': 'التحليل الإحصائي التفاعلي',
+'analysis-desc': 'استكشف الاستثمارات الفلاحية بفلاتر ديناميكية وأنشئ تحليلاتك الخاصة عبر السحب والإفلات.',
+'an-filters-title': 'فلاتر البيانات',
+'an-lbl-sector': '📂 النشاط',
+'an-lbl-years': '📅 نطاق السنوات',
+'an-btn-export': 'تصدير إلى Excel',
+'an-custom-title': 'تحليل مخصص',
+'an-vars-title': '📦 المتغيرات',
+'an-zone-x': '📐 المحور X',
+'an-zone-y': '📊 المحور Y',
+'an-zone-group': '🎨 تصنيف (اختياري)',
+'an-main-title': 'تطور الاستثمارات (مصرح به / مصادق عليه)',
+'an-result-title': 'نتيجة التحليل المخصص',
+'an-btn-chart': 'رسم بياني',
+'an-btn-table': 'جدول',
+'an-var-year': '📅 السنة',
+'an-var-decl': '💰 التصاريح',
+'an-var-appr': '✅ المصادقات',
+'an-var-sub': '🎁 المنح',
+'an-var-jobs': '👥 مواطن الشغل',
+'an-var-sector': '🏷️ النشاط',
+  },
+  en: {
+    'brand-sub': 'Smart Agricultural Investment Platform',
+    'statusText': 'System operational · 2026 data',
+    'label-main': 'Main',
+    'label-analytics': 'Analytics',
+    'label-tools': 'Project Ideas',
+    'nav-home': 'Home',
+    'nav-home-sub': 'Overview',
+    'nav-agent': 'AI Assistant',
+    'nav-dash': 'Dashboards',
+    'nav-indic': 'Indicators',
+    'nav-ideas': 'Project Ideas',
+    'nav-map': 'Interactive Map',
+    'home-eyebrow': 'Main dashboard',
+    'home-title': 'Welcome to APIA SmartAgri AI',
+    'home-desc': 'Informational awareness and artificial intelligence supporting agricultural investment in Tunisia.',
+
+    'fc1-title': 'AI Agricultural Assistant',
+    'fc1-desc': 'Ask your questions about investment, regulations, and agricultural opportunities in Tunisia.',
+    'fc2-title': 'AI Project Generator',
+    'fc2-desc': 'Get a tailored project idea with an indicative study based on your region and budget.',
+    'fc3-title': 'Interactive Map',
+    'fc3-desc': 'Visualize investment opportunities by governorate on the map of Tunisia.',
+    'fc4-title': 'Interactive Statistical Analysis',
+    'fc4-desc': 'Explore agricultural investments with dynamic filters and build your own analyses with drag & drop.',
+    'fc5-title': 'Sectoral Dashboards',
+    'fc5-desc': 'Interactive dashboards by value chain and region, powered by Tableau Public.',
+    'fc6-title': 'Key Indicators',
+    'fc6-desc': 'Real-time tracking of investment, production, and export KPIs by governorate.',
+
+    'agent-eyebrow': 'Artificial Intelligence',
+    'agent-title': 'AI Agricultural Assistant',
+    // 'agent-desc': 'Your intelligent agriculture advisor, available 24/7.',
+    'dash-eyebrow': 'Analysis & Visualization',
+    'dash-title': 'Sectoral Dashboards',
+    'dash-desc': 'Interactive dashboards. Filter and explore agricultural investment data.',
+    'dash-data-label': 'Data updated: 2025',
+    'dash-btn-refresh': 'Refresh',
+    'dash-btn-fullscreen': 'Full screen',
+    'dash-footer-note': '✦ Interactive dashboard: use the filters to explore by governorate, sector, or period.',
+    'indic-eyebrow': 'Monitoring & Measurement',
+    'indic-title': 'Key Performance Indicators',
+    'indic-desc': 'Track the strategic KPIs of the Tunisian agricultural sector.',
+    'indic-data-label': 'Data updated: 2025',
+    'indic-btn-refresh': 'Refresh',
+    'indic-btn-fullscreen': 'Full screen',
+    'indic-footer-note': '✦ Interactive indicators: use the filters to explore by governorate, sector, or period.',
+    'ideas-eyebrow': 'AI Tool · Project Generation',
+    'ideas-title': 'Agricultural project idea generator',
+    'ideas-desc': 'Fill in your investor profile and get a tailored project idea.',
+    'form-title-label': 'Your profile',
+    'lbl-region': 'Target governorate',
+    'lbl-budget': 'Available budget (DT)',
+    'lbl-interests': 'Areas of interest',
+    'lbl-exp': 'Agricultural experience',
+    'btn-generate-text': 'Generate my project',
+    'placeholder-text': 'Fill out the form to generate your project idea',
+    'result-tag': 'AI-generated project',
+    'rm1-label': 'Estimated investment',
+    'rm2-label': 'Total grant value',
+    'rm3-label': 'Payback period',
+    'result-note': 'ⓘ This project is provided for indicative purposes only. Contact APIA for a full feasibility study.',
+    'map-eyebrow': 'Investment geography',
+    'map-title': 'Interactive map — Agricultural Tunisia',
+    'map-desc': 'Explore investment opportunities by governorate.',
+    'map-legend-title': 'Value chain legend',
+    'leg1': 'Vegetable crops',
+    'leg2': 'Tree crops',
+    'leg3': 'Livestock',
+    'leg4': 'Agritech',
+    'leg5': 'Agro-processing',
+    'map-embed-title': 'Tableau map — Ready to embed',
+    'map-embed-desc': 'Embed your Tableau Public map here.',
+'nav-analysis': 'Statistical Analysis',
+'analysis-eyebrow': 'Advanced analytics · Drag & Drop',
+'analysis-title': 'Interactive Statistical Analysis',
+'analysis-desc': 'Explore agricultural investments with dynamic filters and build your own analyses with drag & drop.',
+'an-filters-title': 'Data filters',
+'an-lbl-sector': '📂 Activity',
+'an-lbl-years': '📅 Year range',
+'an-btn-export': 'Export to Excel',
+'an-custom-title': 'Custom analysis',
+'an-vars-title': '📦 Variables',
+'an-zone-x': '📐 X Axis',
+'an-zone-y': '📊 Y Axis',
+'an-zone-group': '🎨 Grouping (optional)',
+'an-main-title': 'Investment evolution (declared / approved)',
+'an-result-title': 'Custom analysis result',
+'an-btn-chart': 'Chart',
+'an-btn-table': 'Table',
+'an-var-year': '📅 Year',
+'an-var-decl': '💰 Declared',
+'an-var-appr': '✅ Approved',
+'an-var-sub': '🎁 Subsidies',
+'an-var-jobs': '👥 Jobs',
+'an-var-sector': '🏷️ Activity',
+  }
+};
+
+/* ═══════════════════════════════════════════════════
+   PAGE NAVIGATION
+   ═══════════════════════════════════════════════════ */
+function showPage(id, btn) {
+  PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.classList.remove('active');
+  });
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  // Reload iframes on first display to fix rendering
+  if (id === 'indicators') {
+    setTimeout(() => {
+      const iframe = document.getElementById('indicateurs-iframe');
+      if (iframe) iframe.src = iframe.src;
+    }, 600);
+  }
+
+  if (id === 'dashboards') {
+    setTimeout(() => {
+      const iframe = document.getElementById('dashboard-iframe');
+      if (iframe) iframe.src = iframe.src;
+    }, 600);
+  }
+
+  // ✅ Analysis page initialization (separate block!)
+  if (id === 'analysis') {
+    setTimeout(() => {
+      if (typeof window.__analysisInit === 'function') window.__analysisInit();
+    }, 100);
+  }
+
+  // Coze bot show/hide
+  if (id === 'agent') {
+    document.body.classList.add('coze-active');
+    setTimeout(initCoze, 200);
+  } else {
+    document.body.classList.remove('coze-active');
+    hideCoze();
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   COZE SDK
+   ═══════════════════════════════════════════════════ */
+function initCoze() {
+  if (typeof CozeWebSDK === 'undefined') {
+    console.warn('CozeWebSDK not loaded');
+    return;
+  }
+
+  if (!cozeReady) {
+    try {
+      cozeClient = new CozeWebSDK.WebChatClient({
+        config: { bot_id: '7612631903040077877' },
+        componentProps: {
+          title: 'APIA SmartAgri',
+          icon: 'https://i.ibb.co/fccKzcx/1.png'
+        },
+        auth: {
+          type: 'token',
+          token: 'pat_j8M',
+          onRefreshToken: () => 'pat_j8M'
+        }
+      });
+      cozeReady = true;
+    } catch (e) {
+      console.error('Coze init error:', e);
+      return;
+    }
+  }
+
+  let attempts = 0;
+  const showTimer = setInterval(() => {
+    if (cozeClient && typeof cozeClient.show === 'function') {
+      try { cozeClient.show(); } catch (e) {}
+    }
+    if (++attempts > 20) clearInterval(showTimer);
+  }, 100);
+}
+
+function hideCoze() {
+  try {
+    if (cozeClient && typeof cozeClient.hide === 'function') cozeClient.hide();
+  } catch (e) {}
+}
+
+/* ═══════════════════════════════════════════════════
+   IFRAME HELPERS (Dashboard + Indicateurs)
+   ═══════════════════════════════════════════════════ */
+function refreshIframe(id) {
+  const iframe = document.getElementById(id);
+  if (iframe) iframe.src = iframe.src;
+}
+
+function toggleFullscreen(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!document.fullscreenElement) {
+    const fn = container.requestFullscreen || container.webkitRequestFullscreen;
+    if (fn) fn.call(container);
+  } else {
+    const fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) fn.call(document);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PROJECT GENERATOR
+   ═══════════════════════════════════════════════════ */
+function toggleChip(el) {
+  el.classList.toggle('selected');
+}
+
+function parseBudgetMax(budgetStr) {
+  if (!budgetStr) return 9999999;
+  const cleaned = budgetStr.replace(/\s/g, '');
+  if (cleaned.includes('أقل من 60 ألف دينار')) return 60000;
+  if (cleaned.includes('60 ألف دينار  --  200 ألف دينار')) return 200000;
+  if (cleaned.includes('200 ألف دينار  -- 1  مليون دينار')) return 1000000;
+  if (cleaned.includes('1 مليون دينار  -- 2  مليون دينار')) return 2000000;
+  return 9999999;
+}
+
+function generateIdea() {
+  const region = document.getElementById('sel-region').value;
+  const budgetStr = document.getElementById('sel-budget').value;
+
+  if (!region || !budgetStr) {
+    alert('Veuillez choisir un gouvernorat et un budget.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-generate');
+  btn.classList.add('generating');
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.classList.remove('generating');
+    btn.disabled = false;
+
+    const maxBudget = parseBudgetMax(budgetStr);
+
+    let filtered = PROJECTS.filter(p =>
+      p.governorate === region && p.investment <= maxBudget * 1.4
+    );
+    if (filtered.length === 0) filtered = PROJECTS.filter(p => p.governorate === region);
+    if (filtered.length === 0) filtered = PROJECTS;
+
+    const project = filtered[Math.floor(Math.random() * filtered.length)];
+
+    document.getElementById('result-placeholder').style.display = 'none';
+    document.getElementById('result-content').classList.add('show');
+
+    document.getElementById('result-tag').textContent = '✦ Projet IA · ' + region;
+    document.getElementById('result-name').textContent = project.name;
+    document.getElementById('result-sub').textContent = project.governorate;
+    document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
+    document.getElementById('rm2-val').textContent = project.grant + ' DT';
+    document.getElementById('rm3-val').textContent = '—';
+    document.getElementById('result-desc-text').textContent = project.components;
+
+    // Build action buttons
+    const actions = document.getElementById('result-actions');
+    actions.innerHTML = '';
+
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'btn btn-primary';
+    viewBtn.innerHTML = '👁️ عرض الملف الكامل';
+    viewBtn.addEventListener('click', () => openPdfInModal(project.fileLink));
+    actions.appendChild(viewBtn);
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn btn-ghost';
+    resetBtn.textContent = '↺ Nouveau projet';
+    resetBtn.addEventListener('click', resetIdea);
+    actions.appendChild(resetBtn);
+  }, 1400);
+}
+
+function resetIdea() {
+  document.getElementById('result-placeholder').style.display = 'flex';
+  document.getElementById('result-content').classList.remove('show');
+  document.getElementById('sel-region').value = '';
+  document.getElementById('sel-budget').value = '';
+  document.getElementById('sel-exp').value = 'Débutant';
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+}
+
+/* ═══════════════════════════════════════════════════
+   PDF MODAL
+   ═══════════════════════════════════════════════════ */
+function openPdfInModal(url) {
+  const modal = document.getElementById('pdf-modal');
+  const frame = document.getElementById('pdf-frame');
+  frame.src = url;
+  modal.classList.add('show');
+}
+
+function closePdfModal() {
+  const modal = document.getElementById('pdf-modal');
+  const frame = document.getElementById('pdf-frame');
+  modal.classList.remove('show');
+  frame.src = '';
+}
+
+/* ═══════════════════════════════════════════════════
+   CLOCK
+   ═══════════════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  const el = document.getElementById('clock');
+  if (el) {
+    el.textContent = now.toLocaleTimeString('fr-TN', { hour: '2-digit', minute: '2-digit' });
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   LANGUAGE SWITCHING
+   ═══════════════════════════════════════════════════ */
+function setLang(lang, btn) {
+  if (!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const t = TRANSLATIONS[lang];
+  Object.keys(t).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t[id];
+  });
+
+  const html = document.documentElement;
+  if (lang === 'ar') {
+    html.setAttribute('dir', 'rtl');
+    html.setAttribute('lang', 'ar');
+    document.body.style.fontFamily = "'Tajawal', sans-serif";
+  } else {
+    html.setAttribute('dir', 'ltr');
+    html.setAttribute('lang', lang);
+    document.body.style.fontFamily = "'Outfit', 'Tajawal', sans-serif";
+  }
+
+  // Keep Tableau iframes always LTR
+  ['indicateurs-container', 'dashboard-container'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.style.direction = 'ltr';
+  });
+
+  // Reload iframes after language change to refresh layout
+  setTimeout(() => {
+    refreshIframe('indicateurs-iframe');
+    refreshIframe('dashboard-iframe');
+  }, 300);
+// At the end of setLang(), after the iframe refresh block:
+setTimeout(() => {
+  if (typeof window.__analysisRefresh === 'function') window.__analysisRefresh();
+}, 200);
+}
+
+/* ═══════════════════════════════════════════════════
+   INITIALIZATION
+   ═══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+
+
+  // Clock
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Sidebar nav
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const page = btn.getAttribute('data-page');
+      if (page) showPage(page, btn);
+    });
+  // تطبيق اللغة العربية عند الفتح
+  setLang('ar', document.querySelector('[data-lang="ar"]'));
+});
+
+  // Feature cards (clickable cards on home page)
+  document.querySelectorAll('.feature-card[data-target]').forEach(card => {
+    card.addEventListener('click', () => {
+      const target = card.getAttribute('data-target');
+      const navBtn = document.querySelector('.nav-item[data-page="' + target + '"]');
+      showPage(target, navBtn);
+    });
+  });
+
+  // Language buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang) setLang(lang, btn);
+    });
+  });
+
+  // Chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => toggleChip(chip));
+  });
+
+  // Generate button
+  const genBtn = document.getElementById('btn-generate');
+  if (genBtn) genBtn.addEventListener('click', generateIdea);
+
+  // Dashboard toolbar
+  const dashRefresh = document.getElementById('dash-refresh-btn');
+  if (dashRefresh) dashRefresh.addEventListener('click', () => refreshIframe('dashboard-iframe'));
+
+  const dashFs = document.getElementById('dash-fullscreen-btn');
+  if (dashFs) dashFs.addEventListener('click', () => toggleFullscreen('dashboard-container'));
+
+  // Indicateurs toolbar
+  const indicRefresh = document.getElementById('indic-refresh-btn');
+  if (indicRefresh) indicRefresh.addEventListener('click', () => refreshIframe('indicateurs-iframe'));
+
+  const indicFs = document.getElementById('indic-fullscreen-btn');
+  if (indicFs) indicFs.addEventListener('click', () => toggleFullscreen('indicateurs-container'));
+
+  // PDF modal close
+  const pdfClose = document.getElementById('pdf-close-btn');
+  if (pdfClose) pdfClose.addEventListener('click', closePdfModal);
+
+  // Close PDF modal on backdrop click
+  const pdfModal = document.getElementById('pdf-modal');
+  if (pdfModal) {
+    pdfModal.addEventListener('click', (e) => {
+      if (e.target === pdfModal) closePdfModal();
+    });
+  }
+
+  // Close PDF modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePdfModal();
+  });
+});
+
+/* ═══════════════════════════════════════════════════
+   ANALYSE STATISTIQUE — Logic
+   ═══════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  const sectors = ['الفلاحة', 'الصيد البحري', 'تربية الأحياء المائية', 'الخدمات الفلاحية', 'التحويل الأولي المندمج'];
+  const yearsList = [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024];
+
+  const declared = {
+    'الفلاحة': [548.0,406.9,443.8,562.7,493.3,657.7,643.7,1286.4,1046.9,1014.3,840.4,882.8,932.1,926.4,834.7],
+    'الصيد البحري': [14.0,19.8,34.3,35.2,36.1,44.7,50.3,81.2,63.2,75.0,63.3,58.3,118.7,86.6,36.1],
+    'تربية الأحياء المائية': [155.8,56.7,26.2,59.6,46.1,43.4,44.7,58.5,49.8,28.6,54.6,27.4,40.1,33.2,52.6],
+    'الخدمات الفلاحية': [102.3,64.7,103.0,152.7,142.7,171.1,164.5,221.6,194.6,145.6,140.1,153.3,151.1,156.2,206.2],
+    'التحويل الأولي المندمج': [29.4,41.2,52.3,48.5,70.6,60.5,127.3,243.2,134.0,130.9,126.3,186.8,77.6,139.0,43.4]
+  };
+
+  const approved = {
+    'الفلاحة': [297.1,330.1,324.7,374.7,450.6,453.8,496.9,486.5,487.0,477.0,364.1,447.9,381.5,311.0,261.2],
+    'الصيد البحري': [12.5,19.8,23.7,35.5,37.0,43.0,38.0,45.7,40.4,45.4,31.3,26.9,61.9,57.9,51.4],
+    'تربية الأحياء المائية': [59.3,54.5,36.2,43.9,37.6,32.7,47.6,25.6,11.2,40.7,7.9,7.2,38.0,3.9,26.0],
+    'الخدمات الفلاحية': [61.9,56.6,108.3,128.0,87.0,113.1,123.3,79.7,116.2,69.6,57.1,61.0,76.1,73.9,94.4],
+    'التحويل الأولي المندمج': [19.8,16.1,30.8,13.3,10.1,41.0,25.2,56.3,64.5,47.3,45.8,33.8,83.4,33.3,11.6]
+  };
+
+  const subsidy = [59.2,62.2,63.5,69.9,81.2,91.2,96.9,145.1,211.4,187.3,146.9,162.5,168.2,139.5,129.4];
+  const jobs = [5619,5691,5569,5163,5082,5635,5795,5719,6654,5464,3965,4288,3552,3076,3001];
+
+  // Build flat dataset
+  const dynamicData = [];
+  for (let i = 0; i < yearsList.length; i++) {
+    for (const s of sectors) {
+      dynamicData.push({
+        year: yearsList[i],
+        sector: s,
+        declared_value: declared[s][i],
+        approved_value: approved[s][i],
+        subsidy: subsidy[i],
+        jobs: jobs[i]
+      });
+    }
+  }
+
+  let mainChart = null;
+  let dynamicChart = null;
+  let xField = null, yField = null, groupField = null;
+  let dynamicMode = 'chart';
+  let initialized = false;
+
+  // Chart.js dark theme defaults
+  function applyChartTheme() {
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.color = 'rgba(230,255,240,0.85)';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
+    Chart.defaults.font.family = "'Outfit', 'Tajawal', sans-serif";
+  }
+
+  function getFieldLabel(field) {
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+    const map = {
+      fr: { year:'📅 Année', sector:'🏷️ Activité', declared_value:'💰 Déclarations', approved_value:'✅ Approbations', subsidy:'🎁 Subventions', jobs:'👥 Emplois' },
+      ar: { year:'📅 السنة', sector:'🏷️ النشاط', declared_value:'💰 التصاريح', approved_value:'✅ المصادقات', subsidy:'🎁 المنح', jobs:'👥 مواطن الشغل' },
+      en: { year:'📅 Year', sector:'🏷️ Activity', declared_value:'💰 Declared', approved_value:'✅ Approved', subsidy:'🎁 Subsidies', jobs:'👥 Jobs' }
+    };
+    return (map[lang] && map[lang][field]) || field;
+  }
+
+  function getSectorLabel(sectorKey, lang) {
+    const map = {
+      fr: { 'all':'Toutes les activités', 'الفلاحة':'Agriculture', 'الصيد البحري':'Pêche', 'تربية الأحياء المائية':'Aquaculture', 'الخدمات الفلاحية':'Services agricoles', 'التحويل الأولي المندمج':'Transformation primaire' },
+      ar: { 'all':'جميع الأنشطة', 'الفلاحة':'الفلاحة', 'الصيد البحري':'الصيد البحري', 'تربية الأحياء المائية':'تربية الأحياء المائية', 'الخدمات الفلاحية':'الخدمات الفلاحية', 'التحويل الأولي المندمج':'التحويل الأولي المندمج' },
+      en: { 'all':'All activities', 'الفلاحة':'Agriculture', 'الصيد البحري':'Fisheries', 'تربية الأحياء المائية':'Aquaculture', 'الخدمات الفلاحية':'Agricultural services', 'التحويل الأولي المندمج':'Primary processing' }
+    };
+    return (map[lang] && map[lang][sectorKey]) || sectorKey;
+  }
+
+  function updateMainChart() {
+    if (typeof Chart === 'undefined') return;
+    const sector = document.getElementById('sectorFilter').value;
+    let startYear = parseInt(document.getElementById('yearStartSlider').value);
+    let endYear = parseInt(document.getElementById('yearEndSlider').value);
+    if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
+
+    document.getElementById('yearStartLabel').textContent = startYear;
+    document.getElementById('yearEndLabel').textContent = endYear;
+
+    const indices = yearsList.map((y, idx) => ({ y, idx }))
+      .filter(({ y }) => y >= startYear && y <= endYear)
+      .map(({ idx }) => idx);
+
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+    const reverseAxis = (lang === 'ar');
+    const orderedIndices = reverseAxis ? [...indices].reverse() : indices;
+    const labels = orderedIndices.map(i => yearsList[i]);
+
+    let declaredVals, approvedVals;
+    if (sector === 'all') {
+      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
+      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
+    } else {
+      declaredVals = orderedIndices.map(i => declared[sector][i]);
+      approvedVals = orderedIndices.map(i => approved[sector][i]);
+    }
+
+    const labelDecl = { fr:'Déclaré (M.DT)', ar:'مصرح به (م.د)', en:'Declared (M.DT)' }[lang] || 'Déclaré';
+    const labelAppr = { fr:'Approuvé (M.DT)', ar:'مصادق عليه (م.د)', en:'Approved (M.DT)' }[lang] || 'Approuvé';
+
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    if (mainChart) mainChart.destroy();
+
+    mainChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: labelDecl,
+            data: declaredVals,
+            borderColor: '#3ae07f',
+            backgroundColor: 'rgba(58,224,127,0.12)',
+            borderWidth: 2.2,
+            tension: 0.35,
+            fill: true,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#3ae07f',
+            pointBorderColor: '#0a5c35'
+          },
+          {
+            label: labelAppr,
+            data: approvedVals,
+            borderColor: '#d4b661',
+            backgroundColor: 'rgba(212,182,97,0.08)',
+            borderWidth: 2.2,
+            tension: 0.35,
+            fill: true,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#d4b661',
+            pointBorderColor: '#7a6428'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            backgroundColor: 'rgba(10,30,20,0.95)',
+            borderColor: 'rgba(29,184,99,0.4)',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()} M.DT`
+            }
+          },
+          legend: {
+            position: 'top',
+            labels: { color: 'rgba(230,255,240,0.85)', font: { size: 11 }, usePointStyle: true, padding: 12 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
+          },
+          x: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+
+  function exportToExcel() {
+    if (typeof XLSX === 'undefined') { alert('Excel library not loaded'); return; }
+    const sector = document.getElementById('sectorFilter').value;
+    let startYear = parseInt(document.getElementById('yearStartSlider').value);
+    let endYear = parseInt(document.getElementById('yearEndSlider').value);
+    if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
+
+    const indices = yearsList.map((y, idx) => ({ y, idx }))
+      .filter(({ y }) => y >= startYear && y <= endYear)
+      .map(({ idx }) => idx);
+
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+    const sectorName = getSectorLabel(sector, lang);
+    const headers = {
+      fr: { year:'Année', activity:'Activité', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)', sub:'Subvention (M.DT)', jobs:'Emplois' },
+      ar: { year:'السنة', activity:'النشاط', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)', sub:'المنحة (م.د)', jobs:'مواطن الشغل' },
+      en: { year:'Year', activity:'Activity', decl:'Declared (M.DT)', appr:'Approved (M.DT)', sub:'Subsidy (M.DT)', jobs:'Jobs' }
+    }[lang] || {};
+
+    const sheetData = indices.map(idx => {
+      const row = {};
+      row[headers.year] = yearsList[idx];
+      row[headers.activity] = sectorName;
+      if (sector === 'all') {
+        row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
+        row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
+      } else {
+        row[headers.decl] = declared[sector][idx];
+        row[headers.appr] = approved[sector][idx];
+      }
+      row[headers.sub] = subsidy[idx];
+      row[headers.jobs] = jobs[idx];
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(sheetData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'APIA');
+    XLSX.writeFile(wb, `APIA_${sector === 'all' ? 'all' : sector}_${startYear}_${endYear}.xlsx`);
+  }
+
+  function setupDropZone(zoneId, type) {
+    const zone = document.getElementById(zoneId);
+    if (!zone) return;
+
+    zone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', function() {
+      this.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      const field = e.dataTransfer.getData('text/plain');
+      if (!field) return;
+
+      if (type === 'x') xField = field;
+      if (type === 'y') yField = field;
+      if (type === 'group') groupField = field;
+
+      this.innerHTML = '';
+      const badge = document.createElement('div');
+      badge.className = 'analysis-drop-badge';
+      badge.innerHTML = `<span>${getFieldLabel(field)}</span>`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'analysis-delete-btn';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', () => removeFromZone(zoneId, type));
+      badge.appendChild(delBtn);
+      this.appendChild(badge);
+
+      updateDynamic();
+    });
+  }
+
+  function removeFromZone(zoneId, type) {
+    const zone = document.getElementById(zoneId);
+    if (zone) zone.innerHTML = '';
+    if (type === 'x') xField = null;
+    if (type === 'y') yField = null;
+    if (type === 'group') groupField = null;
+    updateDynamic();
+  }
+
+  function aggregateDynamic() {
+    if (!xField || !yField) return null;
+    const result = {};
+    dynamicData.forEach(item => {
+      let key = String(item[xField]);
+      if (groupField) key += ' | ' + String(item[groupField]);
+      if (!result[key]) result[key] = 0;
+      result[key] += item[yField] || 0;
+    });
+    return result;
+  }
+
+  function updateDynamic() {
+    const result = aggregateDynamic();
+    const canvas = document.getElementById('dynamicCanvas');
+    const tableDiv = document.getElementById('dynamicTable');
+
+    if (!result) {
+      if (dynamicChart) { dynamicChart.destroy(); dynamicChart = null; }
+      canvas.style.display = 'none';
+      tableDiv.style.display = 'none';
+      return;
+    }
+    if (dynamicMode === 'chart') renderDynamicChart(result);
+    else renderDynamicTable(result);
+  }
+
+  function renderDynamicChart(result) {
+    if (typeof Chart === 'undefined') return;
+    const labels = Object.keys(result);
+    const values = Object.values(result);
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+    const reverse = (xField === 'year' && lang === 'ar');
+
+    if (dynamicChart) dynamicChart.destroy();
+    const ctx = document.getElementById('dynamicCanvas').getContext('2d');
+
+    dynamicChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: getFieldLabel(yField),
+          data: values,
+          backgroundColor: 'rgba(58,224,127,0.55)',
+          borderColor: '#3ae07f',
+          borderWidth: 1.5,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            backgroundColor: 'rgba(10,30,20,0.95)',
+            borderColor: 'rgba(29,184,99,0.4)',
+            borderWidth: 1,
+            callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()}` }
+          },
+          legend: { labels: { color: 'rgba(230,255,240,0.85)', font: { size: 10 } } }
+        },
+        scales: {
+          x: {
+            reverse: reverse,
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 9 }, maxRotation: 45 }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 9 } }
+          }
+        }
+      }
+    });
+
+    document.getElementById('dynamicCanvas').style.display = 'block';
+    document.getElementById('dynamicTable').style.display = 'none';
+  }
+
+  function renderDynamicTable(result) {
+    let html = `<table><thead><tr><th>${getFieldLabel(xField)}</th><th>${getFieldLabel(yField)}</th></tr></thead><tbody>`;
+    for (const key in result) {
+      html += `<tr><td>${key}${key.includes(' | ') ? ' 🔹' : ''}</td><td>${result[key].toLocaleString()}</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    document.getElementById('dynamicTable').innerHTML = html;
+    document.getElementById('dynamicCanvas').style.display = 'none';
+    document.getElementById('dynamicTable').style.display = 'block';
+  }
+
+  function setDynamicMode(mode) {
+    dynamicMode = mode;
+    document.getElementById('btnChart').classList.toggle('active', mode === 'chart');
+    document.getElementById('btnTable').classList.toggle('active', mode === 'table');
+    updateDynamic();
+  }
+
+  function initAnalysisPage() {
+    if (initialized) return;
+    initialized = true;
+    applyChartTheme();
+
+    // Variable drag sources
+    document.querySelectorAll('.analysis-variable').forEach(el => {
+      el.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-field'));
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+    });
+
+    setupDropZone('zoneX', 'x');
+    setupDropZone('zoneY', 'y');
+    setupDropZone('zoneGroup', 'group');
+
+    // Filters
+    const startSlider = document.getElementById('yearStartSlider');
+    const endSlider = document.getElementById('yearEndSlider');
+    startSlider.addEventListener('input', () => {
+      if (parseInt(startSlider.value) > parseInt(endSlider.value)) endSlider.value = startSlider.value;
+      updateMainChart();
+    });
+    endSlider.addEventListener('input', () => {
+      if (parseInt(endSlider.value) < parseInt(startSlider.value)) startSlider.value = endSlider.value;
+      updateMainChart();
+    });
+    document.getElementById('sectorFilter').addEventListener('change', updateMainChart);
+
+    // Mode toggle
+    document.getElementById('btnChart').addEventListener('click', () => setDynamicMode('chart'));
+    document.getElementById('btnTable').addEventListener('click', () => setDynamicMode('table'));
+
+    // Export
+    document.getElementById('an-export-btn').addEventListener('click', exportToExcel);
+
+    // Resize observers
+    const ro = new ResizeObserver(() => {
+      if (mainChart) mainChart.resize();
+      if (dynamicChart) dynamicChart.resize();
+    });
+    ro.observe(document.getElementById('mainChart').parentElement);
+    ro.observe(document.getElementById('dynamicCanvas').parentElement);
+    window.addEventListener('resize', () => {
+      if (mainChart) mainChart.resize();
+      if (dynamicChart) dynamicChart.resize();
+    });
+
+    updateMainChart();
+  }
+
+  // Expose hooks for global navigation + language switching
+  window.__analysisInit = initAnalysisPage;
+  window.__analysisRefresh = function() {
+    if (initialized) {
+      updateMainChart();
+      updateDynamic();
+    }
+  };
+})();
+
+// ═══════════════════════════════════════════════════
+// TUNISIA SVG MAP LOGIC
+// ═══════════════════════════════════════════════════
+
+const investmentData = {
+  'تونس': ['تكثيف الزراعات الجديدة القابلة للتصدير (القنارية)', 'تأهيل هياكل مهنية لدعم الخدمات الفلاحية', 'تركيز وحدات لتحويل وتكييف المنتوجات الفلاحية والبحرية'],
+  'أريانة': ['تكثيف الزراعات القابلة للتصدير (القنارية)', 'تأهيل هياكل مهنية للخدمات الفلاحية', 'الاستثمار في الصناعات الغذائية', 'تربية الأبقار الحلوب وتسمين العجول', 'تربية الماشية الصغرى'],
+  'منوبة': ['تكثيف زراعة الخضروات المميزة (القنارية، الطماطم للتجفيف)', 'غراسة الأشجار المثمرة المكثفة (تفاح، عوينة، خوخ، إجاص)', 'الزراعات الكبرى وتربية الأغنام', 'إحداث منابت الأشجار والخضروات', 'تربية الماشية الصغرى والأبقار الحلوب', 'مخازن التبريد', 'التحويل الأولي المندمج', 'خدمات الميكنة والنقل المبرد'],
+  'بن عروس': ['غراسة أشجار الزيتون والقوارص والنباتات العطرية', 'إنتاج المشاتل', 'تسمين العجول وتربية الأبقار الحلوب', 'زراعة الزهور ونباتات الزينة', 'الخدمات الفلاحية', 'التحويل الأولي (تخزين، توضيب، تكييف)', 'تأهيل هياكل مهنية للخدمات الفلاحية'],
+  'زغوان': ['غراسة الزياتين', 'إحداث معاصر زيتون', 'تربية الأبقار الحلوب', 'تربية الأراخي', 'إحداث مراكز لتجميع الحليب', 'تطوير الفلاحة البيولوجية', 'تأهيل تعاونيات خدمات فلاحية'],
+  'نابل': ['زراعة النباتات الطبية والعطرية', 'غراسة الأشجار المثمرة', 'تربية الماشية المندمجة', 'تربية الأحياء المائية', 'تأهيل أسطول الصيد البحري', 'المشاريع البيئية والإيكولوجية', 'إنتاج البذور والمشاتل', 'خزن الحبوب والأعلاف الخشنة', 'الخدمات الفلاحية', 'خزن وتكييف المنتوجات الفلاحية والبحرية'],
+  'بنزرت': ['استغلال الموارد المائية الجوفية', 'إحداث مسلخ للدواجن', 'تربية الأحياء المائية بالمسطحات المائية', 'تهيئة مراكب الصيد البحري', 'تربية الأسماك والقوقعيات في عرض البحر', 'تربية الأسماك بالأقفاص بالسدود', 'تكييف المنتوجات البحرية (القوقعيات، الحلزون)', 'تربية الأبقار والأراخي', 'مخابر بيطرية', 'وحدات تبريد مندمجة', 'تجفيف النباتات الطبية', 'إنتاج السماد العضوي', 'ميكنة فلاحية', 'غراسة الأشجار المثمرة والزياتين', 'تربية الأغنام وصنع الأجبان', 'تربية النحل والطرائد البرية', 'مراكز لجمع وخزن الحبوب', 'الخضروات تحت البيوت المحمية', 'إنتاج المشاتل'],
+  'باجة': ['غراسة الأشجار المثمرة والزياتين', 'تربية الماشية المندمجة وإنتاج الأراخي', 'تربية الماشية الصغرى (نحل، حلزون...)', 'النباتات الطبية والعطرية (استخراج الزيوت، التجفيف)', 'إنتاج السماد العضوي', 'المنتوجات البيولوجية (مشاتل، بذور)', 'خضروات للتصدير', 'تجميد وتحويل اللحوم', 'صنع جبن الأغنام والماعز', 'تجفيف الحليب والطماطم', 'تجميع وتعليب الحليب', 'خزن وتبريد الخضر والغلال', 'تحويل ولف وتكييف الخضر الطازجة', 'نباتات الزينة', 'تأهيل هياكل مهنية'],
+  'سليانة': ['غراسة الأشجار المثمرة والزياتين', 'تربية الأبقار الحلوب وتسمين العجول', 'مراكز لتجميع الحليب', 'تحويل وتصنيع منتوجات الحبوب', 'إنتاج البذور والمشاتل الممتازة', 'تعاونيات خدمات فلاحية', 'تربية الأسماك بالمياه العذبة', 'خزن وتكييف المنتجات الفلاحية'],
+  'الكاف': ['تربية الماشية المندمجة (أبقار، أراخي، تسمين)', 'مراكز لتجميع الحليب', 'تحويل الألبان', 'الماشية الصغرى (حلزون، ديك رومي، نحل، أرانب)', 'الغراسات المثمرة والزياتين', 'تحويل إنتاج الحبوب', 'البذور والمشاتل البيولوجية', 'تجفيف النباتات الطبية واستخراج الزيوت', 'خزن وتكييف وتعليب زيت الزيتون', 'تعاونيات خدمات فلاحية'],
+  'جندوبة': ['غراسة الأشجار المثمرة والزياتين', 'تربية الأبقار وتسمين العجول بالمناطق السقوية', 'مراكز لتربية الأراخي', 'وحدات لتبريد الحليب', 'تربية الماشية الصغرى', 'خزن وتبريد وتكييف المنتوجات الفلاحية', 'تحويل وتكييف منتجات الصيد البحري', 'إنتاج نباتات الزينة', 'تثمين المنتوجات الغابية (زيوت نباتية، فقاع)', 'تعاونيات خدمات فلاحية', 'تهيئة مراكب الصيد البحري', 'الصيد في السدود', 'منابت خضر وغلال', 'إنتاج وتكييف البذور الممتازة'],
+  'القصرين': ['منابت خضر وغلال', 'تربية الماشية الصغرى', 'تربية الأبقار الحلوب وتسمين العجول وإنتاج الأراخي', 'وحدات لتجميع وتحويل الحليب', 'النباتات الطبية والعطرية والغابية (استخراج الزيوت)', 'وحدات تحويل وتكييف المنتوجات الفلاحية', 'غراسة الزياتين والأشجار المثمرة', 'تعاونيات خدمات فلاحية'],
+  'سيدي بوزيد': ['غراسة الأشجار المثمرة لإنتاج الغلال البدرية', 'غراسة الزياتين المروية', 'تعاونيات خدمات فلاحية', 'زراعة الخضراوات الآخر فصلية والبدرية', 'الزراعات البيولوجية', 'إنتاج المشاتل الممتازة (خضر وغلال)', 'النباتات الطبية والعطرية', 'تربية الماشية المندمجة (ألبان ولحوم)', 'التحويل الأولي المندمج', 'اللف والتكييف', 'خدمات الميكنة الفلاحية', 'تربية الماشية الصغرى'],
+  'القيروان': ['زراعة النباتات العطرية والطبية', 'إنتاج مشاتل الخضر والأشجار المثمرة ونباتات الزينة', 'إنتاج الفطر', 'غراسة الأشجار المثمرة (أصناف عالية المردودية)', 'الزراعات البيولوجية', 'تثمين المنتوج الغابي وإنتاج السماد العضوي', 'تربية الأبقار الحلوب وتسمين العجول', 'مراكز لتربية الأراخي المؤصلة', 'تربية الماشية الصغرى', 'مسلخ للدواجن', 'تربية الأحياء المائية في المياه العذبة', 'وحدات خزن الحبوب', 'شركات تعاونية للخدمات الفلاحية', 'مراكز تجميع وتبريد الحليب', 'وحدات خزن وتبريد المنتوجات الفلاحية', 'تحويل وتصبير المنتوجات الفلاحية'],
+  'سوسة': ['تربية الأسماك البحرية وإنتاج اليرقات', 'دعم وتأهيل الشركات التعاونية', 'مراكز لتجميع الحليب', 'تربية البقر الحلوب بالمناطق السقوية', 'غراسة الزياتين', 'إنتاج الباكورات والزهور ونباتات الزينة', 'التحويل الأولي والخزن والتكييف'],
+  'المنستير': ['إنتاج إصبعيات القاروص والوراطة', 'تربية الأسماك', 'الفلاحة البيولوجية (زيت زيتون بيولوجي)', 'تربية الماشية الصغرى', 'إنتاج نباتات الزينة والأزهار المقطوفة للتصدير', 'استزراع الطحالب المجهرية', 'استخراج الزيوت النباتية والعطرية', 'البيوت المتعددة الهياكل لإنتاج الخضر البدرية', 'بيوت الخزن والتبريد', 'تعاونيات للخدمات الفلاحية'],
+  'المهدية': ['زراعة النباتات الطبية والعطرية', 'غراسة وتشييب غابة الزياتين', 'تربية الماشية الصغرى', 'تأهيل وحدات الصيد البحري وتربية الأحياء المائية', 'تحويل وتكييف المنتوجات الفلاحية والبحرية', 'تبريد وتجميد وتجفيف منتوجات الفلاحة والصيد', 'تعليب زيت الزيتون البيولوجي', 'وحدات لتحويل اللحوم', 'النقل المبرد لمنتوجات الفلاحة والصيد', 'تنظيف مستلزمات الإنتاج في قطاع الصيد', 'تربية القمبري', 'تربية الأحياء المائية والقوقعيات', 'تعاونيات للخدمات الفلاحية'],
+  'صفاقس': ['غراسة الزيتون بالمناطق السقوية', 'منابت لإنتاج شتلات الزيتون', 'تثمين المواد الثانوية للزياتين والزيتون', 'تعليب الزيوت البيولوجية', 'زراعة الخضر البدرية والآخر فصلية', 'النباتات الطبية والعطرية', 'تربية البقر الحلوب وتسمين العجول', 'تربية الماشية الصغرى', 'وحدات تبريد وتحويل المنتوجات الفلاحية', 'تنمية المذابح والمسالخ وتحويل اللحوم', 'تعاونيات خدمات فلاحية', 'خزن الأعلاف الخشنة', 'النقل المبرد لمنتوجات الصيد', 'تهيئة مراكب الصيد', 'تربية الأسماك في أقفاص عائمة', 'وحدات نموذجية لتربية الإسفنج'],
+  'قابس': ['ورشات تسمين للعجول', 'غراسة القوارص وعنب الطاولة', 'غراسة الزياتين المروية', 'استغلال المياه المعالجة في إنتاج الأعلاف', 'تأهيل البيوت المحمية والزراعة خارج التربة', 'الاستغلال الجيوحراري', 'إنتاج مشاتل الخضروات والأشجار', 'تجميع المحار وتهيئة مركز تصفية', 'تأهيل مراكب الصيد', 'تربية الطحالب البحرية', 'مراكز لتجميع الحليب', 'مذابح ومسالخ وتحويل اللحوم', 'مركز فرز وتكييف المنتوجات البيولوجية', 'تعاونيات خدمات فلاحية'],
+  'مدنين': ['غراسة الأشجار المثمرة البدرية (خوخ، عنب) للتصدير', 'تعويض غراسات الزياتين المسنة بالمكثفة', 'الفلاحة البيولوجية (زياتين وأشجار مثمرة)', 'استغلال المياه الجوفية المالحة', 'تربية الماشية المكثفة والنصف مكثفة (أبقار، ماعز، أغنام، إبل)', 'إنتاج اللحوم الحمراء (تسمين)', 'تربية الماشية الصغرى (سمان، ديك رومي، نعام)', 'تأهيل مراكب الصيد', 'تربية الأحياء المائية', 'استغلال ثروات المحار', 'مزارع لتسمين القفالة', 'وحدات لف وخزن المنتوجات', 'تعاونيات للخدمات الفلاحية والصيد', 'تحويل وتعليب زيت الزيتون', 'مذابح ومسالخ', 'تحويل وتجميد منتجات الصيد'],
+  'تطاوين': ['وحدات لإنتاج اللحوم الحمراء (تسمين)', 'تربية الإبل وإنتاج حليب النوق', 'تربية الماشية الصغرى', 'الغراسات والزراعات البدرية (خوخ، مشمش، بطاطا...)', 'مركزية حليب', 'مسلخ ومذبح للحوم الحمراء', 'تثمين المنتوجات الثانوية (جلد، صوف، وبر)', 'تعاونيات خدمات فلاحية'],
+  'قبلي': ['إنتاج الباكورات بالمياه الجيوحرارية', 'النمط البيولوجي للإنتاج', 'منابت لإنتاج مشاتل الخضر', 'تربية الخيول', 'تربية الأسماك بالمياه الجوفية الحارة', 'تربية الإبل بالطريقة النصف المكثفة', 'تربية الطيور البرية (السمان والحجل)', 'تعاونيات خدمات فلاحية', 'تحويل وتكييف التمور', 'تثمين فواضل الواحة'],
+  'توزر': ['تكثيف غراسة النخيل', 'إنتاج الخضراوات بالمياه الجوفية الحارة', 'إنتاج اللحوم الحمراء والبيضاء', 'تربية الإبل (النمط الإنتشاري والنصف الإنتشاري)', 'تثمين مخلفات الواحة', 'استغلال مناطق شط الجريد', 'إنتاج النباتات الطبية والعطرية', 'تعاونيات خدمات فلاحية', 'مركز لتجميع الحليب', 'تكييف وتحويل التمور'],
+  'قفصة': ['تربية الأبقار الحلوب وتسمين العجول بالمناطق السقوية', 'مركزية حليب بالجهة', 'الزراعات الآخر فصلية (بطاطا، خضروات للتصدير)', 'الغراسات البدرية القابلة للتصدير (عنب، مشمش، خوخ، فستق، قوارص)', 'التوسع في غراسات الزيتون', 'تربية الماشية الصغرى', 'مذبح جهوي للدواجن', 'مصنع لتحويل منتوجات الجهة (تمور، خوخ، مشمش)', 'تعاونيات خدمات فلاحية']
+};
+
+// Extract unique opportunities for sidebar
+const opportunityIndex = {};
+Object.entries(investmentData).forEach(([gov, opps]) => {
+  opps.forEach(opp => {
+    if (!opportunityIndex[opp]) opportunityIndex[opp] = [];
+    opportunityIndex[opp].push(gov);
+  });
+});
+
+let selectedGovernorate = null;
+let selectedOpportunity = null;
+
+function initInvestmentMap() {
+  renderOpportunities();
+  attachMapEvents();
+}
+
+function attachMapEvents() {
+  const paths = document.querySelectorAll('.gov-path');
+  paths.forEach(path => {
+    path.addEventListener('click', function() {
+      const govName = this.getAttribute('data-name');
+      selectGovernorate(govName);
+    });
+    
+    // Hover tooltip effect
+    path.addEventListener('mouseenter', function(e) {
+      const govName = this.getAttribute('data-name');
+      const count = investmentData[govName]?.length || 0;
+      // You can add a tooltip element here if needed
+    });
+  });
+}
+
+function renderOpportunities() {
+  const container = document.getElementById('opportunitiesCloud');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  // Sort by frequency (most common first)
+  const sortedOpps = Object.entries(opportunityIndex)
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, 30); // Show top 30 opportunities
+  
+  sortedOpps.forEach(([opp, governorates]) => {
+    const chip = document.createElement('div');
+    chip.className = 'opp-chip';
+    chip.innerHTML = `
+      <span>${opp}</span>
+      <span class="count-badge">${governorates.length}</span>
+    `;
+    chip.onclick = () => selectOpportunity(opp);
+    
+    if (selectedOpportunity === opp) {
+      chip.classList.add('active');
+    }
+    
+    container.appendChild(chip);
+  });
+}
+
+function selectGovernorate(name) {
+  selectedGovernorate = name;
+  selectedOpportunity = null;
+  
+  // Update map UI
+  document.querySelectorAll('.gov-path').forEach(p => {
+    p.classList.remove('active', 'highlighted', 'dimmed');
+    if (p.getAttribute('data-name') === name) {
+      p.classList.add('active');
+    }
+  });
+  
+  document.getElementById('btn-reset-filter').style.display = 'none';
+  
+  // Show detail panel
+  const panel = document.getElementById('govDetailPanel');
+  const title = document.getElementById('selectedGovName');
+  const content = document.getElementById('govDetailContent');
+  
+  title.textContent = name + ' (' + (investmentData[name]?.length || 0) + ' فرصة)';
+  content.innerHTML = (investmentData[name] || []).map(opp => 
+    `<div class="opp-item">${opp}</div>`
+  ).join('');
+  
+  panel.style.display = 'block';
+}
+
+function closeGovDetail() {
+  document.getElementById('govDetailPanel').style.display = 'none';
+  selectedGovernorate = null;
+  document.querySelectorAll('.gov-path').forEach(p => {
+    p.classList.remove('active');
+  });
+}
+
+function selectOpportunity(opp) {
+  selectedOpportunity = opp;
+  selectedGovernorate = null;
+  closeGovDetail();
+  
+  // Show reset button
+  const resetBtn = document.getElementById('btn-reset-filter');
+  if (resetBtn) resetBtn.style.display = 'inline-flex';
+  
+  // Highlight governorates on map
+  const targetGovernorates = opportunityIndex[opp] || [];
+  
+  document.querySelectorAll('.gov-path').forEach(p => {
+    const govName = p.getAttribute('data-name');
+    p.classList.remove('active', 'highlighted', 'dimmed');
+    
+    if (targetGovernorates.includes(govName)) {
+      p.classList.add('highlighted');
+    } else {
+      p.classList.add('dimmed');
+    }
+  });
+  
+  // Update sidebar
+  renderOpportunities();
+  
+  // Update hint
+  const hint = document.getElementById('sidebar-hint');
+  if (hint) {
+    hint.innerHTML = `<span style="color:var(--gold)">●</span> ${opp}<br>متوفرة في ${targetGovernorates.length} ولاية`;
+  }
+}
+
+function clearOpportunityFilter() {
+  selectedOpportunity = null;
+  
+  document.querySelectorAll('.gov-path').forEach(p => {
+    p.classList.remove('highlighted', 'dimmed', 'active');
+  });
+  
+  const resetBtn = document.getElementById('btn-reset-filter');
+  if (resetBtn) resetBtn.style.display = 'none';
+  
+  const hint = document.getElementById('sidebar-hint');
+  if (hint) hint.textContent = 'Cliquez sur une opportunité pour voir sa répartition géographique';
+  
+  renderOpportunities();
+}
+
+// Initialize when page shown
+document.addEventListener('DOMContentLoaded', () => {
+  // Hook into navigation if showPage exists
+  if (typeof showPage === 'function') {
+    const originalShowPage = showPage;
+    showPage = function(id, btn) {
+      originalShowPage(id, btn);
+      if (id === 'map') {
+        setTimeout(initInvestmentMap, 100);
+      }
+    };
+  }
+});
+// ═══════════════════════════════════════════════════
+// TUNISIA LEAFLET MAP - INTEGRATED VERSION
+// ═══════════════════════════════════════════════════
+
+const governorateInvestmentData = {
+  "تونس": ["تكثيف الزراعات الجديدة القابلة للتصدير (القنارية)", "تأهيل هياكل مهنية لدعم الخدمات الفلاحية", "تركيز وحدات لتحويل وتكييف المنتوجات الفلاحية والبحرية"],
+  "أريانة": ["تكثيف الزراعات القابلة للتصدير (القنارية)", "تأهيل هياكل مهنية للخدمات الفلاحية", "الاستثمار في الصناعات الغذائية", "تربية الأبقار الحلوب وتسمين العجول", "تربية الماشية الصغرى"],
+  "منوبة": ["تكثيف زراعة الخضروات المميزة (القنارية، الطماطم للتجفيف)", "غراسة الأشجار المثمرة المكثفة (تفاح، عوينة، خوخ، إجاص)", "الزراعات الكبرى وتربية الأغنام", "إحداث منابت الأشجار والخضروات", "تربية الماشية الصغرى والأبقار الحلوب", "مخازن التبريد", "التحويل الأولي المندمج", "خدمات الميكنة والنقل المبرد"],
+  "بن عروس": ["غراسة أشجار الزيتون والقوارص والنباتات العطرية", "إنتاج المشاتل", "تسمين العجول وتربية الأبقار الحلوب", "زراعة الزهور ونباتات الزينة", "الخدمات الفلاحية", "التحويل الأولي (تخزين، توضيب، تكييف)", "تأهيل هياكل مهنية للخدمات الفلاحية"],
+  "زغوان": ["غراسة الزياتين", "إحداث معاصر زيتون", "تربية الأبقار الحلوب", "تربية الأراخي", "إحداث مراكز لتجميع الحليب", "تطوير الفلاحة البيولوجية", "تأهيل تعاونيات خدمات فلاحية"],
+  "نابل": ["زراعة النباتات الطبية والعطرية", "غراسة الأشجار المثمرة", "تربية الماشية المندمجة", "تربية الأحياء المائية", "تأهيل أسطول الصيد البحري", "المشاريع البيئية والإيكولوجية", "إنتاج البذور والمشاتل", "خزن الحبوب والأعلاف الخشنة", "الخدمات الفلاحية", "خزن وتكييف المنتوجات الفلاحية والبحرية"],
+  "بنزرت": ["استغلال الموارد المائية الجوفية", "إحداث مسلخ للدواجن", "تربية الأحياء المائية بالمسطحات المائية", "تهيئة مراكب الصيد البحري", "تربية الأسماك والقوقعيات في عرض البحر", "تربية الأسماك بالأقفاص بالسدود", "تكييف المنتوجات البحرية (القوقعيات، الحلزون)", "تربية الأبقار والأراخي", "مخابر بيطرية", "وحدات تبريد مندمجة", "تجفيف النباتات الطبية", "إنتاج السماد العضوي", "ميكنة فلاحية", "غراسة الأشجار المثمرة والزياتين", "تربية الأغنام وصنع الأجبان", "تربية النحل والطرائد البرية", "مراكز لجمع وخزن الحبوب", "الخضروات تحت البيوت المحمية", "إنتاج المشاتل"],
+  "باجة": ["غراسة الأشجار المثمرة والزياتين", "تربية الماشية المندمجة وإنتاج الأراخي", "تربية الماشية الصغرى (نحل، حلزون...)", "النباتات الطبية والعطرية (استخراج الزيوت، التجفيف)", "إنتاج السماد العضوي", "المنتوجات البيولوجية (مشاتل، بذور)", "خضروات للتصدير", "تجميد وتحويل اللحوم", "صنع جبن الأغنام والماعز", "تجفيف الحليب والطماطم", "تجميع وتعليب الحليب", "خزن وتبريد الخضر والغلال", "تحويل ولف وتكييف الخضر الطازجة", "نباتات الزينة", "تأهيل هياكل مهنية"],
+  "سليانة": ["غراسة الأشجار المثمرة والزياتين", "تربية الأبقار الحلوب وتسمين العجول", "مراكز لتجميع الحليب", "تحويل وتصنيع منتوجات الحبوب", "إنتاج البذور والمشاتل الممتازة", "تعاونيات خدمات فلاحية", "تربية الأسماك بالمياه العذبة", "خزن وتكييف المنتجات الفلاحية"],
+  "الكاف": ["تربية الماشية المندمجة (أبقار، أراخي، تسمين)", "مراكز لتجميع الحليب", "تحويل الألبان", "الماشية الصغرى (حلزون، ديك رومي، نحل، أرانب)", "الغراسات المثمرة والزياتين", "تحويل إنتاج الحبوب", "البذور والمشاتل البيولوجية", "تجفيف النباتات الطبية واستخراج الزيوت", "خزن وتكييف وتعليب زيت الزيتون", "تعاونيات خدمات فلاحية"],
+  "جندوبة": ["غراسة الأشجار المثمرة والزياتين", "تربية الأبقار وتسمين العجول بالمناطق السقوية", "مراكز لتربية الأراخي", "وحدات لتبريد الحليب", "تربية الماشية الصغرى", "خزن وتبريد وتكييف المنتوجات الفلاحية", "تحويل وتكييف منتجات الصيد البحري", "إنتاج نباتات الزينة", "تثمين المنتوجات الغابية (زيوت نباتية، فقاع)", "تعاونيات خدمات فلاحية", "تهيئة مراكب الصيد البحري", "الصيد في السدود", "منابت خضر وغلال", "إنتاج وتكييف البذور الممتازة"],
+  "القصرين": ["منابت خضر وغلال", "تربية الماشية الصغرى", "تربية الأبقار الحلوب وتسمين العجول وإنتاج الأراخي", "وحدات لتجميع وتحويل الحليب", "النباتات الطبية والعطرية والغابية (استخراج الزيوت)", "وحدات تحويل وتكييف المنتوجات الفلاحية", "غراسة الزياتين والأشجار المثمرة", "تعاونيات خدمات فلاحية"],
+  "سيدي بوزيد": ["غراسة الأشجار المثمرة لإنتاج الغلال البدرية", "غراسة الزياتين المروية", "تعاونيات خدمات فلاحية", "زراعة الخضراوات الآخر فصلية والبدرية", "الزراعات البيولوجية", "إنتاج المشاتل الممتازة (خضر وغلال)", "النباتات الطبية والعطرية", "تربية الماشية المندمجة (ألبان ولحوم)", "التحويل الأولي المندمج", "اللف والتكييف", "خدمات الميكنة الفلاحية", "تربية الماشية الصغرى"],
+  "القيروان": ["زراعة النباتات العطرية والطبية", "إنتاج مشاتل الخضر والأشجار المثمرة ونباتات الزينة", "إنتاج الفطر", "غراسة الأشجار المثمرة (أصناف عالية المردودية)", "الزراعات البيولوجية", "تثمين المنتوج الغابي وإنتاج السماد العضوي", "تربية الأبقار الحلوب وتسمين العجول", "مراكز لتربية الأراخي المؤصلة", "تربية الماشية الصغرى", "مسلخ للدواجن", "تربية الأحياء المائية في المياه العذبة", "وحدات خزن الحبوب", "شركات تعاونية للخدمات الفلاحية", "مراكز تجميع وتبريد الحليب", "وحدات خزن وتبريد المنتوجات الفلاحية", "تحويل وتصبير المنتوجات الفلاحية"],
+  "سوسة": ["تربية الأسماك البحرية وإنتاج اليرقات", "دعم وتأهيل الشركات التعاونية", "مراكز لتجميع الحليب", "تربية البقر الحلوب بالمناطق السقوية", "غراسة الزياتين", "إنتاج الباكورات والزهور ونباتات الزينة", "التحويل الأولي والخزن والتكييف"],
+  "المنستير": ["إنتاج إصبعيات القاروص والوراطة", "تربية الأسماك", "الفلاحة البيولوجية (زيت زيتون بيولوجي)", "تربية الماشية الصغرى", "إنتاج نباتات الزينة والأزهار المقطوفة للتصدير", "استزراع الطحالب المجهرية", "استخراج الزيوت النباتية والعطرية", "البيوت المتعددة الهياكل لإنتاج الخضر البدرية", "بيوت الخزن والتبريد", "تعاونيات للخدمات الفلاحية"],
+  "المهدية": ["زراعة النباتات الطبية والعطرية", "غراسة وتشييب غابة الزياتين", "تربية الماشية الصغرى", "تأهيل وحدات الصيد البحري وتربية الأحياء المائية", "تحويل وتكييف المنتوجات الفلاحية والبحرية", "تبريد وتجميد وتجفيف منتوجات الفلاحة والصيد", "تعليب زيت الزيتون البيولوجي", "وحدات لتحويل اللحوم", "النقل المبرد لمنتوجات الفلاحة والصيد", "تنظيف مستلزمات الإنتاج في قطاع الصيد", "تربية القمبري", "تربية الأحياء المائية والقوقعيات", "تعاونيات للخدمات الفلاحية"],
+  "صفاقس": ["غراسة الزيتون بالمناطق السقوية", "منابت لإنتاج شتلات الزيتون", "تثمين المواد الثانوية للزياتين والزيتون", "تعليب الزيوت البيولوجية", "زراعة الخضر البدرية والآخر فصلية", "النباتات الطبية والعطرية", "تربية البقر الحلوب وتسمين العجول", "تربية الماشية الصغرى", "وحدات تبريد وتحويل المنتوجات الفلاحية", "تنمية المذابح والمسالخ وتحويل اللحوم", "تعاونيات خدمات فلاحية", "خزن الأعلاف الخشنة", "النقل المبرد لمنتوجات الصيد البحري", "تهيئة مراكب الصيد البحري", "تربية الأسماك في أقفاص عائمة", "وحدات نموذجية لتربية الإسفنج"],
+  "قابس": ["ورشات تسمين للعجول المنتجة داخل الضيعات", "غراسة القوارص وعنب الطاولة", "غراسة الزياتين المروية", "استغلال المياه المعالجة في إنتاج الأعلاف وتربية الماشية", "تأهيل البيوت المحمية الكانارية والبلاستيكية والزراعة خارج التربة", "الاستغلال الجيوحراري للمياه الحارة", "إنتاج مشاتل الخضروات والأشجار المثمرة", "تجميع المحار وتهيئة مركز تصفية", "تأهيل مراكب الصيد البحري", "تربية الطحالب البحرية بالأحواض", "مراكز لتجميع الحليب", "مذابح ومسالخ ووحدات لتحويل اللحوم", "مركز فرز وتكييف المنتوجات البيولوجية", "تعاونيات خدمات فلاحية"],
+  "مدنين": ["غراسة الأشجار المثمرة البدرية (خوخ، عنب) للتصدير", "تعويض غراسات الزياتين المسنة بالمكثفة", "الفلاحة البيولوجية (زياتين وأشجار مثمرة)", "استغلال المياه الجوفية المالحة", "تربية الماشية المكثفة والنصف مكثفة (أبقار، ماعز، أغنام، إبل)", "إنتاج اللحوم الحمراء (تسمين)", "تربية الماشية الصغرى (سمان، ديك رومي، نعام)", "تأهيل مراكب الصيد البحري", "تربية الأحياء المائية", "استغلال ثروات المحار", "مزارع لتسمين القفالة", "وحدات لف وخزن المنتوجات", "تعاونيات للخدمات الفلاحية والصيد", "تحويل وتعليب زيت الزيتون", "مذابح ومسالخ", "تحويل وتجميد منتجات الصيد"],
+  "تطاوين": ["وحدات لإنتاج اللحوم الحمراء (تسمين)", "تربية الإبل وإنتاج حليب النوق", "تربية الماشية الصغرى", "الغراسات والزراعات البدرية (خوخ، مشمش، بطاطا...)", "مركزية حليب", "مسلخ ومذبح للحوم الحمراء", "تثمين المنتوجات الثانوية (جلد، صوف، وبر)", "تعاونيات خدمات فلاحية"],
+  "قبلي": ["إنتاج الباكورات بالمياه الجيوحرارية", "النمط البيولوجي للإنتاج", "منابت لإنتاج مشاتل الخضر", "تربية الخيول", "تربية الأسماك بالمياه الجوفية الحارة", "تربية الإبل بالطريقة النصف المكثفة", "تربية الطيور البرية (السمان والحجل)", "تعاونيات خدمات فلاحية", "تحويل وتكييف التمور", "تثمين فواضل الواحة"],
+  "توزر": ["تكثيف غراسة النخيل", "إنتاج الخضراوات بالمياه الجوفية الحارة", "إنتاج اللحوم الحمراء والبيضاء", "تربية الإبل (النمط الإنتشاري والنصف الإنتشاري)", "تثمين مخلفات الواحة", "استغلال مناطق شط الجريد", "إنتاج النباتات الطبية والعطرية", "تعاونيات خدمات فلاحية", "مركز لتجميع الحليب", "تكييف وتحويل التمور"],
+  "قفصة": ["تربية الأبقار الحلوب وتسمين العجول بالمناطق السقوية", "مركزية حليب بالجهة", "الزراعات الآخر فصلية (بطاطا، خضروات للتصدير)", "الغراسات البدرية القابلة للتصدير (عنب، مشمش، خوخ، فستق، قوارص)", "التوسع في غراسات الزيتون", "تربية الماشية الصغرى", "مذبح جهوي للدواجن", "مصنع لتحويل منتوجات الجهة (تمور، خوخ، مشمش)", "تعاونيات خدمات فلاحية"]
+};
+
+const govCoordinates = {
+  "تونس": [36.8065, 10.1815], "أريانة": [36.8625, 10.1956], "منوبة": [36.8073, 10.0898],
+  "بن عروس": [36.7363, 10.2261], "زغوان": [36.4091, 10.1423], "نابل": [36.497, 10.7278],
+  "بنزرت": [37.2744, 9.8739], "باجة": [36.7256, 9.1819], "سليانة": [36.0833, 9.3694],
+  "الكاف": [36.0753, 8.7047], "جندوبة": [36.5018, 8.7803], "القيروان": [35.6771, 10.1017],
+  "سوسة": [35.8333, 10.6333], "المنستير": [35.7775, 10.8261], "المهدية": [35.5061, 11.0625],
+  "صفاقس": [34.7333, 10.7667], "قابس": [33.8833, 10.1167], "مدنين": [33.3547, 10.5053],
+  "تطاوين": [32.9333, 10.45], "قبلي": [33.7044, 8.9692], "توزر": [33.9197, 8.1339],
+  "قفصة": [34.4267, 8.7878], "سيدي بوزيد": [35.0386, 9.4878], "القصرين": [35.1647, 8.8203]
+};
+
+let investmentMap = null;
+let govCircles = {};
+let activeTooltip = null;
+let selectedOpp = null;
+let selectedGov = null;
+
+// Build reverse index
+const oppToGovernorates = {};
+Object.entries(governorateInvestmentData).forEach(([gov, opps]) => {
+  opps.forEach(opp => {
+    if (!oppToGovernorates[opp]) oppToGovernorates[opp] = [];
+    if (!oppToGovernorates[opp].includes(gov)) oppToGovernorates[opp].push(gov);
+  });
+});
+
+const sortedOpps = Object.entries(oppToGovernorates)
+  .sort((a, b) => b[1].length - a[1].length);
+
+function initLeafletMap() {
+  if (investmentMap) return; // Already initialized
+  
+  investmentMap = L.map('tnLeafletMap', {
+    center: [34.5, 9.5],
+    zoom: 7,
+    minZoom: 6,
+    maxZoom: 10,
+    zoomControl: false
+  });
+  
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(investmentMap);
+  
+  L.control.zoom({ position: 'bottomright' }).addTo(investmentMap);
+  
+  addGovernorateCircles();
+  renderOpportunitiesList();
+}
+
+function addGovernorateCircles() {
+  const baseRadius = 21000;
+  
+  Object.entries(govCoordinates).forEach(([name, coords]) => {
+    const circle = L.circle(coords, {
+      color: 'rgba(255,255,255,0.3)',
+      fillColor: 'rgba(29,184,99,0.3)',
+      fillOpacity: 0.6,
+      radius: baseRadius,
+      weight: 2,
+      className: 'investment-circle'
+    }).addTo(investmentMap);
+    
+    // Custom tooltip with governorate name
+    circle.bindTooltip(`<div class="map-tooltip-custom">${name}</div>`, {
+      permanent: true,
+      direction: 'top',
+      offset: [0, -10],
+      className: 'map-tooltip-custom'
+    });
+    
+    circle.on('click', () => selectGovernorate(name));
+    
+    govCircles[name] = circle;
+  });
+}
+
+function selectGovernorate(name) {
+  selectedGov = name;
+  selectedOpp = null;
+  
+  // Reset all circles
+  Object.values(govCircles).forEach(c => {
+    c.setStyle({
+      color: 'rgba(255,255,255,0.3)',
+      fillColor: 'rgba(29,184,99,0.3)',
+      fillOpacity: 0.6,
+      weight: 2
+    });
+    c.setRadius(21000);
+  });
+  
+  // Highlight selected
+  if (govCircles[name]) {
+    govCircles[name].setStyle({
+      color: '#3ae07f',
+      fillColor: 'rgba(58,224,127,0.5)',
+      fillOpacity: 0.9,
+      weight: 4
+    });
+    govCircles[name].setRadius(25000);
+  }
+  
+  // Show toast
+  const toast = document.getElementById('govToast');
+  const title = document.getElementById('toastTitle');
+  const body = document.getElementById('toastBody');
+  const opps = governorateInvestmentData[name] || [];
+  
+  title.textContent = `📍 ${name}`;
+  body.innerHTML = opps.length ? 
+    `<ul>${opps.map(o => `<li>${o}</li>`).join('')}</ul>` : 
+    '<div style="color:var(--text-muted)">لا توجد فرص مسجلة</div>';
+  
+  toast.style.display = 'flex';
+  
+  // Show reset button
+  document.getElementById('btn-reset-map').style.display = 'inline-flex';
+  
+  // Update sidebar hint
+  document.getElementById('sidebar-hint').textContent = 
+    `تم عرض فرص ${name} (${opps.length} فرصة)`;
+}
+
+function hideGovToast() {
+  document.getElementById('govToast').style.display = 'none';
+}
+
+function resetMapView() {
+  selectedGov = null;
+  selectedOpp = null;
+  
+  // Reset circles
+  Object.values(govCircles).forEach(c => {
+    c.setStyle({
+      color: 'rgba(255,255,255,0.3)',
+      fillColor: 'rgba(29,184,99,0.3)',
+      fillOpacity: 0.6,
+      weight: 2
+    });
+    c.setRadius(21000);
+  });
+  
+  hideGovToast();
+  document.getElementById('btn-reset-map').style.display = 'none';
+  document.getElementById('sidebar-hint').textContent = 'اختر فرصة لترى الولايات المتوفر بها';
+  
+  // Remove active from cards
+  document.querySelectorAll('.opp-card-glass').forEach(c => c.classList.remove('active'));
+}
+
+function renderOpportunitiesList() {
+  const container = document.getElementById('opportunitiesList');
+  container.innerHTML = '';
+  
+  sortedOpps.forEach(([opp, govs]) => {
+    const card = document.createElement('div');
+    card.className = 'opp-card-glass';
+    card.innerHTML = `
+      <div class="opp-card-title">${opp}</div>
+      <div class="opp-card-meta">
+        <span></span>
+        <span class="opp-card-count">${govs.length}</span>
+      </div>
+    `;
+    
+    card.addEventListener('click', () => selectOpportunity(opp, card));
+    container.appendChild(card);
+  });
+  
+  document.getElementById('oppCountBadge').textContent = `${sortedOpps.length} فرصة`;
+}
+
+function selectOpportunity(opp, cardElement) {
+  selectedOpp = opp;
+  selectedGov = null;
+  hideGovToast();
+  
+  // Highlight card
+  document.querySelectorAll('.opp-card-glass').forEach(c => c.classList.remove('active'));
+  cardElement.classList.add('active');
+  
+  // Show reset button
+  document.getElementById('btn-reset-map').style.display = 'inline-flex';
+  
+  // Update map circles
+  const targetGovs = oppToGovernorates[opp] || [];
+  
+  Object.entries(govCircles).forEach(([name, circle]) => {
+    if (targetGovs.includes(name)) {
+      circle.setStyle({
+        color: '#d4b661',
+        fillColor: 'rgba(212,182,97,0.6)',
+        fillOpacity: 0.8,
+        weight: 2
+      });
+      circle.setRadius(24000);
+    } else {
+      circle.setStyle({
+        color: 'rgba(255,255,255,0.1)',
+        fillColor: 'rgba(100,100,100,0.1)',
+        fillOpacity: 0.2,
+        weight: 1
+      });
+      circle.setRadius(21000);
+    }
+  });
+  
+  // Update hint
+  document.getElementById('sidebar-hint').innerHTML = 
+    `<span style="color:var(--gold)">●</span> ${opp}<br>متوفرة في ${targetGovs.length} ولاية`;
+}
+
+// Initialize when page shown
+document.addEventListener('DOMContentLoaded', () => {
+  // Hook into navigation
+  if (typeof showPage === 'function') {
+    const origShowPage = showPage;
+    showPage = function(id, btn) {
+      origShowPage(id, btn);
+      if (id === 'map') {
+        setTimeout(initLeafletMap, 200);
+      }
+    };
+  }
+});
+</script>
+</body>
+</html>
