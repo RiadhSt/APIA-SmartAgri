@@ -2627,7 +2627,15 @@ function toggleFullscreen(containerId) {
    PROJECT GENERATOR
    ═══════════════════════════════════════════════════ */
 function toggleChip(el) {
-  el.classList.toggle('selected');
+  // إذا كان الـ Chip مضغوطاً مسبقاً، نلغي تحديده
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+  } else {
+    // إزالة كلاس 'selected' من جميع الـ Chips الأخرى أولاً لضمان اختيار قطاع واحد فقط
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    // تفعيل الـ Chip الذي تم الضغط عليه حالياً
+    el.classList.add('selected');
+  }
 }
 
 function parseBudgetMax(budgetStr) {
@@ -2649,9 +2657,9 @@ function generateIdea() {
     return;
   }
 
-  // 1. جلب القطاعات المحددة من الواجهة (التي تحمل كلاس selected)
-  const selectedChips = Array.from(document.querySelectorAll('.chip.selected'))
-                             .map(chip => chip.textContent.trim());
+  // جلب القطاع المختار (سيكون قطاعاً واحداً فقط الآن أو فارغاً)
+  const selectedChip = document.querySelector('.chip.selected');
+  const selectedSector = selectedChip ? selectedChip.textContent.trim() : null;
 
   const btn = document.getElementById('btn-generate');
   btn.classList.add('generating');
@@ -2663,51 +2671,49 @@ function generateIdea() {
 
     const maxBudget = parseBudgetMax(budgetStr);
 
-    // 2. الفلترة الأساسية: حسب الولاية والميزانية
-    let filtered = PROJECTS.filter(p =>
-      p.governorate === region && p.investment <= maxBudget * 1.4
-    );
+    // 1. الفلترة الصارمة: يجب أن يطابق الولاية والقطاع (إذا تم اختياره) والميزانية
+    let filtered = PROJECTS.filter(p => {
+      const matchRegion = (p.governorate === region);
+      const matchSector = selectedSector ? (p.sector === selectedSector) : true;
+      const matchBudget = (p.investment <= maxBudget * 1.4);
+      return matchRegion && matchSector && matchBudget;
+    });
 
-    // 3. الفلترة المتقدمة: حسب القطاع (إذا اختار المستخدم قطاعاً واحداً أو أكثر)
-    if (selectedChips.length > 0 && filtered.length > 0) {
-      const sectorFiltered = filtered.filter(p => selectedChips.includes(p.sector));
-      
-      // إذا عثرنا على مشاريع تطابق القطاع والولاية والميزانية نعتمدها
-      if (sectorFiltered.length > 0) {
-        filtered = sectorFiltered;
-      } 
-      // شبكة أمان فرعية: إذا لم نجد، نبحث عن القطاع في نفس الولاية متجاوزين شرط الميزانية
-      else {
-        const fallbackSector = PROJECTS.filter(p => p.governorate === region && selectedChips.includes(p.sector));
-        if (fallbackSector.length > 0) {
-          filtered = fallbackSector;
-        }
-      }
+    // 2. شبكة أمان داخلية: إذا لم نجد في حدود الميزانية، نأتي بأي مشروع من نفس القطاع والولاية لتفادي النتيجة الصفرية
+    if (filtered.length === 0) {
+      filtered = PROJECTS.filter(p => {
+        const matchRegion = (p.governorate === region);
+        const matchSector = selectedSector ? (p.sector === selectedSector) : true;
+        return matchRegion && matchSector;
+      });
     }
 
-    // 4. شبكة الأمان العامة (الموجودة في كودك الأصلي)
-    if (filtered.length === 0) filtered = PROJECTS.filter(p => p.governorate === region);
-    if (filtered.length === 0) filtered = PROJECTS;
+    // 3. النتيجة الصفرية الحقيقية: إذا كانت الولاية لا تحتوي أصلاً على هذا القطاع في قاعدة البيانات
+    if (filtered.length === 0) {
+      alert(`⚠️ لا توجد أفكار مشاريع متوفرة حالياً في ولاية (${region}) تخص قطاع (${selectedSector || 'القطاع المحدد'}). جاري إثراء قاعدة البيانات قريباً.`);
+      
+      // إعادة الواجهة لحالة الانتظار
+      document.getElementById('result-placeholder').style.display = 'flex';
+      document.getElementById('result-content').classList.remove('show');
+      return;
+    }
 
-    // اختيار المشروع النهائي
+    // اختيار المشروع النهائي من النتائج المطابقة تماماً لشروطنا
     const project = filtered[Math.floor(Math.random() * filtered.length)];
 
-    // تحديث واجهة المستخدم بالبيانات
+    // إظهار النتيجة في الواجهة
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
     document.getElementById('result-tag').textContent = '✦ Projet IA · ' + region;
     document.getElementById('result-name').textContent = project.name;
-    
-    // إضافة اسم القطاع بجانب الولاية في السطر الفرعي للجمالية
     document.getElementById('result-sub').textContent = project.governorate + ' • ' + (project.sector || '');
-    
     document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
     document.getElementById('rm2-val').textContent = parseInt(project.grant).toLocaleString('fr-TN') + ' DT';
-    document.getElementById('rm3-val').textContent = '—'; // تم إزالة الخبرة كما طلبت وتثبيتها
+    document.getElementById('rm3-val').textContent = '—';
     document.getElementById('result-desc-text').textContent = project.components;
 
-    // بناء أزرار العمليات
+    // بناء الأزرار
     const actions = document.getElementById('result-actions');
     actions.innerHTML = '';
 
@@ -2724,6 +2730,7 @@ function generateIdea() {
     actions.appendChild(resetBtn);
   }, 1400);
 }
+  
 function resetIdea() {
   document.getElementById('result-placeholder').style.display = 'flex';
   document.getElementById('result-content').classList.remove('show');
