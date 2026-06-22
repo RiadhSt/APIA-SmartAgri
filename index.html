@@ -2191,7 +2191,7 @@ const PROJECTS = [
     investment: 105000,
     grant: '32439',
     name: 'إنتاج الزهور المقطوفة',
-    sector: 'الانتاج الفلاحي',
+    sector: 'الانتاج النباتي',
     components: 'اقتناء 6 بيوت حامية / اقتناء معدات ري قطرة قطرة وبالرش / اقتناء سيارة نفعية',
     fileLink: 'https://www.apia.com.tn/medias/files/idees-projets/2018/veg1.pdf'
   },
@@ -2200,7 +2200,7 @@ const PROJECTS = [
     investment: 171927,
     grant: '60330',
     name: 'غراسة الزياتين المروية وتربية الأبقار',
-    sector: 'الانتاج الفلاحي',
+    sector: 'الانتاج النباتي',
     components: 'بناء مغازة ومسكن ريفي واسطبل للأبقار / احداث بئر سطحية...',
     fileLink: 'https://www.apia.com.tn/medias/files/idees-projets/2018/veg2.pdf'
   },
@@ -2209,7 +2209,7 @@ const PROJECTS = [
     investment: 168000,
     grant: '69192',
     name: 'غراسة القوارص',
-    sector: 'الانتاج الفلاحي',
+    sector: 'الانتاج النباتي',
     components: 'غراسة 3.2 هك قوارص/ معدات ري موضعي/ مصدات رياح/ بيت محرك/ جرار فلاحي وتوابعه...',
     fileLink: 'https://www.apia.com.tn/medias/files/idees-projets/2018/veg3.pdf'
   }
@@ -2649,6 +2649,10 @@ function generateIdea() {
     return;
   }
 
+  // 1. جلب القطاعات المحددة من الواجهة (التي تحمل كلاس selected)
+  const selectedChips = Array.from(document.querySelectorAll('.chip.selected'))
+                             .map(chip => chip.textContent.trim());
+
   const btn = document.getElementById('btn-generate');
   btn.classList.add('generating');
   btn.disabled = true;
@@ -2659,26 +2663,51 @@ function generateIdea() {
 
     const maxBudget = parseBudgetMax(budgetStr);
 
+    // 2. الفلترة الأساسية: حسب الولاية والميزانية
     let filtered = PROJECTS.filter(p =>
       p.governorate === region && p.investment <= maxBudget * 1.4
     );
+
+    // 3. الفلترة المتقدمة: حسب القطاع (إذا اختار المستخدم قطاعاً واحداً أو أكثر)
+    if (selectedChips.length > 0 && filtered.length > 0) {
+      const sectorFiltered = filtered.filter(p => selectedChips.includes(p.sector));
+      
+      // إذا عثرنا على مشاريع تطابق القطاع والولاية والميزانية نعتمدها
+      if (sectorFiltered.length > 0) {
+        filtered = sectorFiltered;
+      } 
+      // شبكة أمان فرعية: إذا لم نجد، نبحث عن القطاع في نفس الولاية متجاوزين شرط الميزانية
+      else {
+        const fallbackSector = PROJECTS.filter(p => p.governorate === region && selectedChips.includes(p.sector));
+        if (fallbackSector.length > 0) {
+          filtered = fallbackSector;
+        }
+      }
+    }
+
+    // 4. شبكة الأمان العامة (الموجودة في كودك الأصلي)
     if (filtered.length === 0) filtered = PROJECTS.filter(p => p.governorate === region);
     if (filtered.length === 0) filtered = PROJECTS;
 
+    // اختيار المشروع النهائي
     const project = filtered[Math.floor(Math.random() * filtered.length)];
 
+    // تحديث واجهة المستخدم بالبيانات
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
     document.getElementById('result-tag').textContent = '✦ Projet IA · ' + region;
     document.getElementById('result-name').textContent = project.name;
-    document.getElementById('result-sub').textContent = project.governorate;
+    
+    // إضافة اسم القطاع بجانب الولاية في السطر الفرعي للجمالية
+    document.getElementById('result-sub').textContent = project.governorate + ' • ' + (project.sector || '');
+    
     document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
-    document.getElementById('rm2-val').textContent = project.grant + ' DT';
-    document.getElementById('rm3-val').textContent = '—';
+    document.getElementById('rm2-val').textContent = parseInt(project.grant).toLocaleString('fr-TN') + ' DT';
+    document.getElementById('rm3-val').textContent = '—'; // تم إزالة الخبرة كما طلبت وتثبيتها
     document.getElementById('result-desc-text').textContent = project.components;
 
-    // Build action buttons
+    // بناء أزرار العمليات
     const actions = document.getElementById('result-actions');
     actions.innerHTML = '';
 
@@ -2695,14 +2724,13 @@ function generateIdea() {
     actions.appendChild(resetBtn);
   }, 1400);
 }
-
 function resetIdea() {
   document.getElementById('result-placeholder').style.display = 'flex';
   document.getElementById('result-content').classList.remove('show');
   document.getElementById('sel-region').value = '';
   document.getElementById('sel-budget').value = '';
-  document.getElementById('sel-exp').value = 'Débutant';
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  
 }
 
 /* ═══════════════════════════════════════════════════
