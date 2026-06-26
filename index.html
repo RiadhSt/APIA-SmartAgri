@@ -2648,18 +2648,38 @@ function parseBudgetMax(budgetStr) {
   return 9999999;
 }
 
+function getBudgetRange(budgetStr) {
+  const cleaned = budgetStr.replace(/\s/g, '');
+  
+  if (cleaned.includes('أقل من 60 ألف دينار')) {
+    return { min: 0, max: 60000 };
+  }
+  if (cleaned.includes('60 ألف دينار--200 ألف دينار') || cleaned.includes('60 ألف دينار--200 ألف دينار')) {
+    return { min: 60000, max: 200000 };
+  }
+  if (cleaned.includes('200 ألف دينار--1مليون دينار')) {
+    return { min: 200000, max: 1000000 };
+  }
+  if (cleaned.includes('1مليون دينار--2مليون دينار')) {
+    return { min: 1000000, max: 2000000 };
+  }
+  // أكثر من 2 مليون دينار
+  return { min: 2000000, max: 99999999 };
+}
+  
 function generateIdea() {
   const region = document.getElementById('sel-region').value;
   const budgetStr = document.getElementById('sel-budget').value;
 
-  if (!region || !budgetStr) {
-    alert('Veuillez choisir un gouvernorat et un budget.');
-    return;
-  }
-
-  // جلب القطاع المختار (سيكون قطاعاً واحداً فقط الآن أو فارغاً)
+  // جلب القطاع المختار من الـ Chips
   const selectedChip = document.querySelector('.chip.selected');
   const selectedSector = selectedChip ? selectedChip.textContent.trim() : null;
+
+  // 1. جعل القطاع خانة إجبارية تماماً كبقية الخانات
+  if (!region || !budgetStr || !selectedSector) {
+    alert('Veuillez choisir un gouvernorat, un budget et un secteur d\'activité.');
+    return;
+  }
 
   const btn = document.getElementById('btn-generate');
   btn.classList.add('generating');
@@ -2669,39 +2689,57 @@ function generateIdea() {
     btn.classList.remove('generating');
     btn.disabled = false;
 
-    const maxBudget = parseBudgetMax(budgetStr);
+    // جلب نطاق الميزانية المختار (الحد الأدنى والأقصى)
+    const range = getBudgetRange(budgetStr);
 
-    // 1. الفلترة الصارمة: يجب أن يطابق الولاية والقطاع (إذا تم اختياره) والميزانية
+    // 2. المحاولة الأولى: فلترة صارمة جداً (الولاية + القطاع + نطاق الميزانية الدقيق)
     let filtered = PROJECTS.filter(p => {
-      const matchRegion = (p.governorate === region);
-      const matchSector = selectedSector ? (p.sector === selectedSector) : true;
-      const matchBudget = (p.investment <= maxBudget * 1.4);
-      return matchRegion && matchSector && matchBudget;
+      return p.governorate === region && 
+             p.sector === selectedSector && 
+             p.investment >= range.min && 
+             p.investment <= range.max;
     });
 
-    // 2. شبكة أمان داخلية: إذا لم نجد في حدود الميزانية، نأتي بأي مشروع من نفس القطاع والولاية لتفادي النتيجة الصفرية
+    // 3. المحاولة الثانية (توسيع نطاق الميزانية قليلاً لمرونة أكبر في نفس القطاع والولاية)
     if (filtered.length === 0) {
       filtered = PROJECTS.filter(p => {
-        const matchRegion = (p.governorate === region);
-        const matchSector = selectedSector ? (p.sector === selectedSector) : true;
-        return matchRegion && matchSector;
+        return p.governorate === region && 
+               p.sector === selectedSector && 
+               p.investment <= range.max * 1.3; // سماحية بـ 30% أعلى من الحد الأقصى
       });
     }
 
-    // 3. النتيجة الصفرية الحقيقية: إذا كانت الولاية لا تحتوي أصلاً على هذا القطاع في قاعدة البيانات
+    // 4. خطة التراجع الذكي (Fallback): إذا لم يجد مشروعاً في هذا القطاع بالذات
+    // يأخذ أول مشروع متاح لتلك الولاية يقع في نفس النطاق المالي المختار
     if (filtered.length === 0) {
-      alert(`⚠️ لا توجد أفكار مشاريع متوفرة حالياً في ولاية (${region}) تخص قطاع (${selectedSector || 'القطاع المحدد'}). جاري إثراء قاعدة البيانات قريباً.`);
-      
-      // إعادة الواجهة لحالة الانتظار
+      const fallbackProjects = PROJECTS.filter(p => {
+        return p.governorate === region && 
+               p.investment >= range.min && 
+               p.investment <= range.max;
+      });
+
+      if (fallbackProjects.length > 0) {
+        filtered = [fallbackProjects[0]]; // اعتماد أول مشروع يطابق الميزانية في تلك الولاية
+      }
+    }
+
+    // 5. شبكة الأمان الأخيرة: إذا كانت الولاية خالية تماماً من هذه الميزانية، نأتي بأي مشروع من نفس الولاية
+    if (filtered.length === 0) {
+      filtered = PROJECTS.filter(p => p.governorate === region);
+    }
+
+    // 6. إذا كانت قاعدة البيانات لا تحتوي على هذه الولاية مطلقاً حتى الآن
+    if (filtered.length === 0) {
+      alert(`⚠️ لا توجد مشاريع مسجلة حالياً لولاية ${region}. جاري تحديث البيانات.`);
       document.getElementById('result-placeholder').style.display = 'flex';
       document.getElementById('result-content').classList.remove('show');
       return;
     }
 
-    // اختيار المشروع النهائي من النتائج المطابقة تماماً لشروطنا
+    // اختيار المشروع النهائي
     const project = filtered[Math.floor(Math.random() * filtered.length)];
 
-    // إظهار النتيجة في الواجهة
+    // حقن البيانات في الواجهة
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
