@@ -3242,7 +3242,12 @@ function updateNavigator(current, total) {
   const countText = document.getElementById('projects-count-text');
   const btnPrev = document.getElementById('btn-prev-project');
   const btnNext = document.getElementById('btn-next-project');
-  
+
+  if (total <= 1) {
+  navigator.style.display = 'none';
+  return;
+}
+navigator.style.display = 'block';
   if (total > 1) {
     navigator.style.display = 'block';
     currentNum.textContent = current + 1;
@@ -3305,36 +3310,18 @@ function generateIdea() {
     const range = getBudgetRange(budgetStr);
     const middleBudget = (range.min + range.max) / 2;
 
-    // فلترة أساسية
+    /* ✅ فلترة صارمة: الولاية + القطاع فقط */
     let filtered = PROJECTS.filter(p =>
       p.governorate === region &&
-      p.sector === selectedSector &&
-      p.investment >= range.min &&
-      p.investment <= range.max
+      p.sector === selectedSector
     );
 
-    // fallback 1
     if (filtered.length === 0) {
-      filtered = PROJECTS.filter(p =>
-        p.governorate === region &&
-        p.investment >= range.min &&
-        p.investment <= range.max
-      );
-    }
-
-    // fallback 2
-    if (filtered.length === 0) {
-      filtered = PROJECTS.filter(p =>
-        p.governorate === region
-      );
-    }
-
-    if (filtered.length === 0) {
-      alert(`⚠️ لا توجد مشاريع مسجلة حالياً لولاية ${region}`);
+      alert(`⚠️ لا توجد مشاريع في قطاع "${selectedSector}" بولاية ${region}`);
       return;
     }
 
-    // ترتيب حسب الأقرب للميزانية
+    /* ✅ ترتيب حسب الأقرب للميزانية */
     filtered.sort((a, b) => {
       const diffA = Math.abs(a.investment - middleBudget);
       const diffB = Math.abs(b.investment - middleBudget);
@@ -3347,7 +3334,7 @@ function generateIdea() {
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
-    displayProject();   // ✅ هنا يتم استدعاء العرض لأول مشروع
+    displayProject();
 
   }, 800);
 }
