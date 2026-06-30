@@ -3232,11 +3232,13 @@ function displayProject() {
 }
 
 // دالة لتحديث مؤشر التنقل
-function updateNavigator(current, total) {
+function updateNavigator() {
+
   const navigator = document.getElementById('project-navigator');
-  
-  if (!navigator) return; // تحقق من وجود العنصر
-  
+  if (!navigator) return;
+
+  const total = matchedProjects.length;
+
   const currentNum = document.getElementById('current-project-num');
   const totalNum = document.getElementById('total-projects-num');
   const countText = document.getElementById('projects-count-text');
@@ -3244,30 +3246,25 @@ function updateNavigator(current, total) {
   const btnNext = document.getElementById('btn-next-project');
 
   if (total <= 1) {
-  navigator.style.display = 'none';
-  return;
-}
-navigator.style.display = 'block';
-  if (total > 1) {
-    navigator.style.display = 'block';
-    currentNum.textContent = current + 1;
-    totalNum.textContent = total;
-    
-    // تحديد النص بناءً على العدد
-    if (total === 2) {
-      countText.textContent = 'مشروعان متطابقان';
-    } else if (total >= 3 && total <= 10) {
-      countText.textContent = total + ' مشاريع متطابقة';
-    } else {
-      countText.textContent = total + ' مشروع متطابق';
-    }
-    
-    // تعطيل/تفعيل الأزرار
-    btnPrev.disabled = current === 0;
-    btnNext.disabled = current === total - 1;
-  } else {
     navigator.style.display = 'none';
+    return;
   }
+
+  navigator.style.display = 'block';
+
+  currentNum.textContent = currentProjectIndex + 1;
+  totalNum.textContent = total;
+
+  if (total === 2) {
+    countText.textContent = 'مشروعان متطابقان';
+  } else if (total >= 3 && total <= 10) {
+    countText.textContent = total + ' مشاريع متطابقة';
+  } else {
+    countText.textContent = total + ' مشروع متطابق';
+  }
+
+  btnPrev.disabled = currentProjectIndex === 0;
+  btnNext.disabled = currentProjectIndex === total - 1;
 }
 
 // دالة التنقل للمشروع السابق
