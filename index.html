@@ -3584,17 +3584,41 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDynamic();
   }
 
-  function aggregateDynamic() {
-    if (!xField || !yField) return null;
-    const result = {};
-    dynamicData.forEach(item => {
-      let key = String(item[xField]);
-      if (groupField) key += ' | ' + String(item[groupField]);
-      if (!result[key]) result[key] = 0;
-      result[key] += item[yField] || 0;
-    });
-    return result;
+function aggregateDynamic() {
+  if (!xField || !yField) return null;
+
+  const result = {};
+  const counts = {};
+
+  dynamicData.forEach(item => {
+    let key = String(item[xField]);
+
+    if (groupField) {
+      key += ' | ' + String(item[groupField]);
+    }
+
+    if (!result[key]) {
+      result[key] = 0;
+      counts[key] = 0;
+    }
+
+    result[key] += item[yField] || 0;
+    counts[key] += 1;
+  });
+
+  // ✅ شرط القسمة على 16
+  const divideByYears =
+    xField !== 'year' &&
+    groupField !== 'year';
+
+if (divideByYears) {
+  for (const key in result) {
+    result[key] = result[key] / counts[key];
   }
+}
+
+  return result;
+}
 
   function updateDynamic() {
     const result = aggregateDynamic();
