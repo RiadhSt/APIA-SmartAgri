@@ -3310,18 +3310,20 @@ function generateIdea() {
     const range = getBudgetRange(budgetStr);
     const middleBudget = (range.min + range.max) / 2;
 
-    /* ✅ فلترة صارمة: الولاية + القطاع فقط */
+    /* ✅ فلترة صارمة: ولاية + قطاع + داخل النطاق */
     let filtered = PROJECTS.filter(p =>
       p.governorate === region &&
-      p.sector === selectedSector
+      p.sector === selectedSector &&
+      p.investment >= range.min &&
+      p.investment <= range.max
     );
 
     if (filtered.length === 0) {
-      alert(`⚠️ لا توجد مشاريع في قطاع "${selectedSector}" بولاية ${region}`);
+      alert(`⚠️ لا توجد مشاريع في هذا القطاع ضمن هذه الميزانية بولاية ${region}`);
       return;
     }
 
-    /* ✅ ترتيب حسب الأقرب للميزانية */
+    /* ✅ ترتيب حسب الأقرب للميزانية داخل النطاق فقط */
     filtered.sort((a, b) => {
       const diffA = Math.abs(a.investment - middleBudget);
       const diffB = Math.abs(b.investment - middleBudget);
@@ -3336,7 +3338,8 @@ function generateIdea() {
 
     displayProject();
 
-  }, 800);
+  }, 500);
+
 }
   
 function resetIdea() {
