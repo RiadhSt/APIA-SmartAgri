@@ -1647,6 +1647,54 @@ option { background: #0a1a0d; }
   opacity: 0.3;
   cursor: not-allowed !important;
 }
+
+
+  
+/* Project Navigator Buttons */
+.nav-btn {
+  font-family: 'Outfit', sans-serif;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: rgba(29,184,99,0.2) !important;
+  border-color: rgba(29,184,99,0.5) !important;
+  transform: scale(1.05);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed !important;
+}
+
+.nav-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* RTL Support for Navigator */
+[dir="rtl"] #project-navigator {
+  direction: rtl;
+}
+
+[dir="rtl"] #btn-prev-project {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] #btn-next-project {
+  transform: scaleX(-1);
+}
+/* Project Transition Animation */
+.result-content.animating {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+}
+
+.result-content.show {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.35s ease;
+}
+  
 </style>
 </head>
 <body>
@@ -3102,39 +3150,69 @@ function parseBudgetMax(budgetStr) {
   return 9999999;
 }
 
+function getBudgetRange(budgetStr) {
+  const cleaned = budgetStr.replace(/\s/g, '');
+  
+  if (cleaned.includes('أقلمن60ألفدينار')) {
+    return { min: 0, max: 60000 };
+  }
+  if (cleaned.includes('60ألفدينار--200ألفدينار')) {
+    return { min: 60000, max: 200000 };
+  }
+  if (cleaned.includes('200ألفدينار--1مليوندينار')) {
+    return { min: 200000, max: 1000000 };
+  }
+  if (cleaned.includes('1مليوندينار--2مليوندينار')) {
+    return { min: 1000000, max: 2000000 };
+  }
+  // أكثر من 2 مليون دينار
+  return { min: 2000000, max: 99999999 };
+}
+
 // دالة لعرض مشروع محدد
-function displayProject(project, index, total) {
-  document.getElementById('result-tag').textContent = '✦ Projet IA · ' + project.governorate;
-  document.getElementById('result-name').textContent = project.name;
-  document.getElementById('result-sub').textContent = project.governorate + ' • ' + (project.sector || '');
-  document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
-  document.getElementById('rm2-val').textContent = parseInt(project.grant || 0).toLocaleString('fr-TN') + ' DT';
-  document.getElementById('rm3-val').textContent = '—';
-  document.getElementById('result-desc-text').textContent = project.components;
+function displayProject() {
 
-  // تحديث مؤشر التنقل
-  updateNavigator(index, total);
+  const content = document.getElementById('result-content');
+  content.classList.add('animating');
 
-  // بناء الأزرار
-  const actions = document.getElementById('result-actions');
-  actions.innerHTML = '';
+  setTimeout(() => {
 
-  const viewBtn = document.createElement('button');
-  viewBtn.className = 'btn btn-primary';
-  viewBtn.innerHTML = '👁️ عرض الملف الكامل';
-  viewBtn.addEventListener('click', () => openPdfInModal(project.fileLink));
-  actions.appendChild(viewBtn);
+    const project = matchedProjects[currentProjectIndex];
 
-  const resetBtn = document.createElement('button');
-  resetBtn.className = 'btn btn-ghost';
-  resetBtn.textContent = '↺ Nouveau projet';
-  resetBtn.addEventListener('click', resetIdea);
-  actions.appendChild(resetBtn);
+    document.getElementById('result-tag').textContent =
+      '✦ Projet IA · ' + project.governorate;
+
+    document.getElementById('result-name').textContent =
+      project.name;
+
+    document.getElementById('result-sub').textContent =
+      project.governorate + ' • ' + project.sector;
+
+    document.getElementById('rm1-val').textContent =
+      project.investment.toLocaleString('fr-TN') + ' DT';
+
+    document.getElementById('rm2-val').textContent =
+      (project.grant ? parseInt(project.grant) : 0)
+        .toLocaleString('fr-TN') + ' DT';
+
+    document.getElementById('rm3-val').textContent = '—';
+
+    document.getElementById('result-desc-text').textContent =
+      project.components;
+
+    updateNavigator();
+
+    content.classList.remove('animating');
+
+  }, 150);
 }
 
 // دالة لتحديث مؤشر التنقل
 function updateNavigator(current, total) {
   const navigator = document.getElementById('project-navigator');
+  
+  if (!navigator) return; // تحقق من وجود العنصر
+  
   const currentNum = document.getElementById('current-project-num');
   const totalNum = document.getElementById('total-projects-num');
   const countText = document.getElementById('projects-count-text');
@@ -3167,7 +3245,7 @@ function updateNavigator(current, total) {
 function navigateToPreviousProject() {
   if (currentProjectIndex > 0) {
     currentProjectIndex--;
-    displayProject(matchedProjects[currentProjectIndex], currentProjectIndex, matchedProjects.length);
+    displayProject();
   }
 }
 
@@ -3175,21 +3253,19 @@ function navigateToPreviousProject() {
 function navigateToNextProject() {
   if (currentProjectIndex < matchedProjects.length - 1) {
     currentProjectIndex++;
-    displayProject(matchedProjects[currentProjectIndex], currentProjectIndex, matchedProjects.length);
+    displayProject();
   }
 }
   
 function generateIdea() {
+
   const region = document.getElementById('sel-region').value;
   const budgetStr = document.getElementById('sel-budget').value;
-
-  // جلب القطاع المختار من الـ Chips
   const selectedChip = document.querySelector('.chip.selected');
   const selectedSector = selectedChip ? selectedChip.textContent.trim() : null;
 
-  // 1. جعل القطاع خانة إجبارية تماماً كبقية الخانات
   if (!region || !budgetStr || !selectedSector) {
-    alert('Veuillez choisir un gouvernorat, un budget et un secteur d\'activité.');
+    alert("Veuillez choisir un gouvernorat, un budget et un secteur d'activité.");
     return;
   }
 
@@ -3198,68 +3274,58 @@ function generateIdea() {
   btn.disabled = true;
 
   setTimeout(() => {
+
     btn.classList.remove('generating');
     btn.disabled = false;
 
-    // جلب نطاق الميزانية المختار (الحد الأدنى والأقصى)
     const range = getBudgetRange(budgetStr);
+    const middleBudget = (range.min + range.max) / 2;
 
-    // 2. المحاولة الأولى: فلترة صارمة جداً (الولاية + القطاع + نطاق الميزانية الدقيق)
-    let filtered = PROJECTS.filter(p => {
-      return p.governorate === region && 
-             p.sector === selectedSector && 
-             p.investment >= range.min && 
-             p.investment <= range.max;
-    });
+    // فلترة أساسية
+    let filtered = PROJECTS.filter(p =>
+      p.governorate === region &&
+      p.sector === selectedSector &&
+      p.investment >= range.min &&
+      p.investment <= range.max
+    );
 
-    // 3. المحاولة الثانية (توسيع نطاق الميزانية قليلاً لمرونة أكبر في نفس القطاع والولاية)
+    // fallback 1
     if (filtered.length === 0) {
-      filtered = PROJECTS.filter(p => {
-        return p.governorate === region && 
-               p.sector === selectedSector && 
-               p.investment <= range.max * 1.3; // سماحية بـ 30% أعلى من الحد الأقصى
-      });
+      filtered = PROJECTS.filter(p =>
+        p.governorate === region &&
+        p.investment >= range.min &&
+        p.investment <= range.max
+      );
     }
 
-    // 4. خطة التراجع الذكي (Fallback): إذا لم يجد مشروعاً في هذا القطاع بالذات
-    // يأخذ أول مشروع متاح لتلك الولاية يقع في نفس النطاق المالي المختار
+    // fallback 2
     if (filtered.length === 0) {
-      const fallbackProjects = PROJECTS.filter(p => {
-        return p.governorate === region && 
-               p.investment >= range.min && 
-               p.investment <= range.max;
-      });
-
-      if (fallbackProjects.length > 0) {
-        filtered = fallbackProjects;
-      }
+      filtered = PROJECTS.filter(p =>
+        p.governorate === region
+      );
     }
 
-    // 5. شبكة الأمان الأخيرة: إذا كانت الولاية خالية تماماً من هذه الميزانية، نأتي بأي مشروع من نفس الولاية
     if (filtered.length === 0) {
-      filtered = PROJECTS.filter(p => p.governorate === region);
-    }
-
-    // 6. إذا كانت قاعدة البيانات لا تحتوي على هذه الولاية مطلقاً حتى الآن
-    if (filtered.length === 0) {
-      alert(`⚠️ لا توجد مشاريع مسجلة حالياً لولاية ${region}. جاري تحديث البيانات.`);
-      document.getElementById('result-placeholder').style.display = 'flex';
-      document.getElementById('result-content').classList.remove('show');
+      alert(`⚠️ لا توجد مشاريع مسجلة حالياً لولاية ${region}`);
       return;
     }
 
-    // حفظ المشاريع المتطابقة وإعادة تعيين المؤشر
+    // ترتيب حسب الأقرب للميزانية
+    filtered.sort((a, b) => {
+      const diffA = Math.abs(a.investment - middleBudget);
+      const diffB = Math.abs(b.investment - middleBudget);
+      return diffA - diffB;
+    });
+
     matchedProjects = filtered;
     currentProjectIndex = 0;
 
-    // إظهار النتائج
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
-    // عرض المشروع الأول
-    displayProject(matchedProjects[0], 0, matchedProjects.length);
+    displayProject();   // ✅ هنا يتم استدعاء العرض لأول مشروع
 
-  }, 1400);
+  }, 800);
 }
   
 function resetIdea() {
@@ -3290,7 +3356,6 @@ function closePdfModal() {
   modal.classList.remove('show');
   frame.src = '';
 }
-
 /* ═══════════════════════════════════════════════════
    CLOCK
    ═══════════════════════════════════════════════════ */
