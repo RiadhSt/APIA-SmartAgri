@@ -1620,6 +1620,33 @@ option { background: #0a1a0d; }
     max-height: 400px;
   }
 }
+
+  /* أضف CSS للـ active chip */
+.chip {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.chip:hover {
+  border-color: var(--primary);
+}
+
+  .nav-btn:hover:not(:disabled) {
+  background: rgba(29,184,99,0.2) !important;
+  border-color: rgba(29,184,99,0.5) !important;
+  transform: scale(1.05);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed !important;
+}
 </style>
 </head>
 <body>
@@ -1893,9 +1920,35 @@ option { background: #0a1a0d; }
           <div class="result-content" id="result-content">
             <div class="result-header">
               <div class="result-tag" id="result-tag">Projet IA Généré</div>
+
+              
+<!-- مؤشر التنقل بين المشاريع -->
+<div id="project-navigator" style="display:none; margin-top:0.75rem;">
+  <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+    <button id="btn-prev-project" onclick="navigateToPreviousProject()" class="nav-btn" style="width:28px; height:28px; border-radius:50%; background:rgba(29,184,99,0.1); border:1px solid rgba(29,184,99,0.3); color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;">
+      ←
+    </button>
+        <div style="flex:1; text-align:center;">
+      <div style="font-size:12px; color:var(--text-secondary); font-weight:500;">
+        المشروع <span id="current-project-num">1</span> من <span id="total-projects-num">1</span>
+      </div>
+      <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
+        <span id="projects-count-text">مشروع متطابق</span>
+      </div>
+    </div>
+    
+    <button id="btn-next-project" onclick="navigateToNextProject()" class="nav-btn" style="width:28px; height:28px; border-radius:50%; background:rgba(29,184,99,0.1); border:1px solid rgba(29,184,99,0.3); color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;">
+      →
+    </button>
+  </div>
+</div>
+
+
+
+              
               <div class="result-project-name" id="result-name">–</div>
               <div class="result-subtitle" id="result-sub">–</div>
-            </div>
+            </div>         
             <div class="result-body">
               <div class="result-metrics">
                 <div class="rm">
@@ -3022,6 +3075,11 @@ function toggleFullscreen(containerId) {
 /* ═══════════════════════════════════════════════════
    PROJECT GENERATOR
    ═══════════════════════════════════════════════════ */
+
+// متغيرات عامة لتتبع المشاريع المتطابقة
+let matchedProjects = [];
+let currentProjectIndex = 0;
+
 function toggleChip(el) {
   // إذا كان الـ Chip مضغوطاً مسبقاً، نلغي تحديده
   if (el.classList.contains('selected')) {
@@ -3044,23 +3102,81 @@ function parseBudgetMax(budgetStr) {
   return 9999999;
 }
 
-function getBudgetRange(budgetStr) {
-  const cleaned = budgetStr.replace(/\s/g, '');
+// دالة لعرض مشروع محدد
+function displayProject(project, index, total) {
+  document.getElementById('result-tag').textContent = '✦ Projet IA · ' + project.governorate;
+  document.getElementById('result-name').textContent = project.name;
+  document.getElementById('result-sub').textContent = project.governorate + ' • ' + (project.sector || '');
+  document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
+  document.getElementById('rm2-val').textContent = parseInt(project.grant || 0).toLocaleString('fr-TN') + ' DT';
+  document.getElementById('rm3-val').textContent = '—';
+  document.getElementById('result-desc-text').textContent = project.components;
+
+  // تحديث مؤشر التنقل
+  updateNavigator(index, total);
+
+  // بناء الأزرار
+  const actions = document.getElementById('result-actions');
+  actions.innerHTML = '';
+
+  const viewBtn = document.createElement('button');
+  viewBtn.className = 'btn btn-primary';
+  viewBtn.innerHTML = '👁️ عرض الملف الكامل';
+  viewBtn.addEventListener('click', () => openPdfInModal(project.fileLink));
+  actions.appendChild(viewBtn);
+
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn btn-ghost';
+  resetBtn.textContent = '↺ Nouveau projet';
+  resetBtn.addEventListener('click', resetIdea);
+  actions.appendChild(resetBtn);
+}
+
+// دالة لتحديث مؤشر التنقل
+function updateNavigator(current, total) {
+  const navigator = document.getElementById('project-navigator');
+  const currentNum = document.getElementById('current-project-num');
+  const totalNum = document.getElementById('total-projects-num');
+  const countText = document.getElementById('projects-count-text');
+  const btnPrev = document.getElementById('btn-prev-project');
+  const btnNext = document.getElementById('btn-next-project');
   
-  if (cleaned.includes('أقل من 60 ألف دينار')) {
-    return { min: 0, max: 60000 };
+  if (total > 1) {
+    navigator.style.display = 'block';
+    currentNum.textContent = current + 1;
+    totalNum.textContent = total;
+    
+    // تحديد النص بناءً على العدد
+    if (total === 2) {
+      countText.textContent = 'مشروعان متطابقان';
+    } else if (total >= 3 && total <= 10) {
+      countText.textContent = total + ' مشاريع متطابقة';
+    } else {
+      countText.textContent = total + ' مشروع متطابق';
+    }
+    
+    // تعطيل/تفعيل الأزرار
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === total - 1;
+  } else {
+    navigator.style.display = 'none';
   }
-  if (cleaned.includes('60 ألف دينار--200 ألف دينار') || cleaned.includes('60 ألف دينار--200 ألف دينار')) {
-    return { min: 60000, max: 200000 };
+}
+
+// دالة التنقل للمشروع السابق
+function navigateToPreviousProject() {
+  if (currentProjectIndex > 0) {
+    currentProjectIndex--;
+    displayProject(matchedProjects[currentProjectIndex], currentProjectIndex, matchedProjects.length);
   }
-  if (cleaned.includes('200 ألف دينار--1مليون دينار')) {
-    return { min: 200000, max: 1000000 };
+}
+
+// دالة التنقل للمشروع التالي
+function navigateToNextProject() {
+  if (currentProjectIndex < matchedProjects.length - 1) {
+    currentProjectIndex++;
+    displayProject(matchedProjects[currentProjectIndex], currentProjectIndex, matchedProjects.length);
   }
-  if (cleaned.includes('1مليون دينار--2مليون دينار')) {
-    return { min: 1000000, max: 2000000 };
-  }
-  // أكثر من 2 مليون دينار
-  return { min: 2000000, max: 99999999 };
 }
   
 function generateIdea() {
@@ -3115,7 +3231,7 @@ function generateIdea() {
       });
 
       if (fallbackProjects.length > 0) {
-        filtered = [fallbackProjects[0]]; // اعتماد أول مشروع يطابق الميزانية في تلك الولاية
+        filtered = fallbackProjects;
       }
     }
 
@@ -3132,36 +3248,17 @@ function generateIdea() {
       return;
     }
 
-    // اختيار المشروع النهائي
-    const project = filtered[Math.floor(Math.random() * filtered.length)];
+    // حفظ المشاريع المتطابقة وإعادة تعيين المؤشر
+    matchedProjects = filtered;
+    currentProjectIndex = 0;
 
-    // حقن البيانات في الواجهة
+    // إظهار النتائج
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-content').classList.add('show');
 
-    document.getElementById('result-tag').textContent = '✦ Projet IA · ' + region;
-    document.getElementById('result-name').textContent = project.name;
-    document.getElementById('result-sub').textContent = project.governorate + ' • ' + (project.sector || '');
-    document.getElementById('rm1-val').textContent = project.investment.toLocaleString('fr-TN') + ' DT';
-    document.getElementById('rm2-val').textContent = parseInt(project.grant).toLocaleString('fr-TN') + ' DT';
-    document.getElementById('rm3-val').textContent = '—';
-    document.getElementById('result-desc-text').textContent = project.components;
+    // عرض المشروع الأول
+    displayProject(matchedProjects[0], 0, matchedProjects.length);
 
-    // بناء الأزرار
-    const actions = document.getElementById('result-actions');
-    actions.innerHTML = '';
-
-    const viewBtn = document.createElement('button');
-    viewBtn.className = 'btn btn-primary';
-    viewBtn.innerHTML = '👁️ عرض الملف الكامل';
-    viewBtn.addEventListener('click', () => openPdfInModal(project.fileLink));
-    actions.appendChild(viewBtn);
-
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'btn btn-ghost';
-    resetBtn.textContent = '↺ Nouveau projet';
-    resetBtn.addEventListener('click', resetIdea);
-    actions.appendChild(resetBtn);
   }, 1400);
 }
   
@@ -3172,6 +3269,9 @@ function resetIdea() {
   document.getElementById('sel-budget').value = '';
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   
+  // إعادة تعيين المتغيرات
+  matchedProjects = [];
+  currentProjectIndex = 0;
 }
 
 /* ═══════════════════════════════════════════════════
