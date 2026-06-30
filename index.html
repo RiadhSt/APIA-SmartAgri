@@ -3172,8 +3172,11 @@ function getBudgetRange(budgetStr) {
 // دالة لعرض مشروع محدد
 function displayProject() {
 
-  const content = document.getElementById('result-content');
-  content.classList.add('animating');
+  const body = document.querySelector('.result-body');
+
+  // Fade Out
+  body.style.opacity = 0;
+  body.style.transform = 'translateY(10px)';
 
   setTimeout(() => {
 
@@ -3202,7 +3205,28 @@ function displayProject() {
 
     updateNavigator();
 
-    content.classList.remove('animating');
+    /* ✅ إعادة بناء الأزرار (الذي اختفى سابقاً) */
+    const actions = document.getElementById('result-actions');
+    actions.innerHTML = '';
+
+    if (project.fileLink && project.fileLink.trim() !== '') {
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn btn-primary';
+      viewBtn.innerHTML = '👁️ عرض الملف الكامل';
+      viewBtn.onclick = () => openPdfInModal(project.fileLink);
+      actions.appendChild(viewBtn);
+    }
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'btn btn-ghost';
+    resetBtn.textContent = '↺ Nouveau projet';
+    resetBtn.onclick = resetIdea;
+    actions.appendChild(resetBtn);
+
+    // Fade In
+    body.style.transition = 'all 0.3s ease';
+    body.style.opacity = 1;
+    body.style.transform = 'translateY(0)';
 
   }, 150);
 }
