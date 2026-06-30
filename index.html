@@ -1694,6 +1694,54 @@ option { background: #0a1a0d; }
   transform: translateY(0);
   transition: all 0.35s ease;
 }
+
+
+
+
+/* Compact Project Navigator */
+.mini-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.25);
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid var(--glass-border);
+}
+
+.mini-nav-text {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mini-nav-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(29,184,99,0.3);
+  background: rgba(29,184,99,0.08);
+  color: var(--green-glow);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.mini-nav-btn:hover:not(:disabled) {
+  background: rgba(29,184,99,0.25);
+  transform: scale(1.1);
+}
+
+.mini-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+
   
 </style>
 </head>
@@ -1971,23 +2019,15 @@ option { background: #0a1a0d; }
 
               
 <!-- مؤشر التنقل بين المشاريع -->
-<div id="project-navigator" style="display:none; margin-top:0.75rem;">
-  <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
-    <button id="btn-prev-project" onclick="navigateToPreviousProject()" class="nav-btn" style="width:28px; height:28px; border-radius:50%; background:rgba(29,184,99,0.1); border:1px solid rgba(29,184,99,0.3); color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;">
-      ←
-    </button>
-        <div style="flex:1; text-align:center;">
-      <div style="font-size:12px; color:var(--text-secondary); font-weight:500;">
-        المشروع <span id="current-project-num">1</span> من <span id="total-projects-num">1</span>
-      </div>
-      <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
-        <span id="projects-count-text">مشروع متطابق</span>
-      </div>
-    </div>
-    
-    <button id="btn-next-project" onclick="navigateToNextProject()" class="nav-btn" style="width:28px; height:28px; border-radius:50%; background:rgba(29,184,99,0.1); border:1px solid rgba(29,184,99,0.3); color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;">
-      →
-    </button>
+<div id="project-navigator" style="display:none; margin-top:0.5rem;">
+  <div class="mini-nav">
+    <button id="btn-prev-project" onclick="navigateToPreviousProject()" class="mini-nav-btn">‹</button>
+
+    <span class="mini-nav-text">
+      <span id="current-project-num">1</span>/<span id="total-projects-num">1</span>
+    </span>
+
+    <button id="btn-next-project" onclick="navigateToNextProject()" class="mini-nav-btn">›</button>
   </div>
 </div>
 
