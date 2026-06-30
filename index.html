@@ -3256,11 +3256,11 @@ function updateNavigator() {
   totalNum.textContent = total;
 
   if (total === 2) {
-    countText.textContent = 'مشروعان متطابقان';
+    countText.textContent = 'مشروعان ممكنان';
   } else if (total >= 3 && total <= 10) {
-    countText.textContent = total + ' مشاريع متطابقة';
+    countText.textContent = total + ' مشاريع ممكنة';
   } else {
-    countText.textContent = total + ' مشروع متطابق';
+    countText.textContent = total + ' مشروع ممكن';
   }
 
   btnPrev.disabled = currentProjectIndex === 0;
