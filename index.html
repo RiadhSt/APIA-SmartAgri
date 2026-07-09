@@ -1694,7 +1694,21 @@ option { background: #0a1a0d; }
   transform: translateY(0);
   transition: all 0.35s ease;
 }
- 
+ @media (max-width: 900px) {
+
+  .shell {
+    grid-template-columns: 1fr; /* إلغاء sidebar في الهاتف */
+  }
+
+  .sidebar {
+    display: none; /* إخفاء القائمة الجانبية */
+  }
+
+  .main {
+    padding: 1rem; /* تقليل الهوامش */
+  }
+
+}
 </style>
 </head>
 <body>
