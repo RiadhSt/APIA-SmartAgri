@@ -1698,32 +1698,34 @@ option { background: #0a1a0d; }
 
 
 /* ════════════════════════════════════════
-   SOLUTION DE SECOURS : SCROLL LIBRE MOBILE
+   SCROLL LIBRE DANS LES 4 DIRECTIONS
    ════════════════════════════════════════ */
 
 html, body {
-  /* Autorise le défilement horizontal ET vertical si le contenu dépasse */
+  /* ✅ Autorise le scroll dans les 4 directions */
   overflow-x: auto !important;
   overflow-y: auto !important;
   
-  /* Rend le défilement fluide et naturel sur iOS (iPhone/iPad) */
+  /* ✅ Active le défilement fluide au doigt sur iOS */
   -webkit-overflow-scrolling: touch !important;
   
-  /* Autorise explicitement les gestes de glissement horizontal et vertical */
+  /* ✅ Autorise explicitement les gestes de glissement X et Y */
   touch-action: pan-x pan-y !important;
   
-  /* Empêche le corps de la page de forcer une largeur fixe qui couperait le contenu */
+  /* ✅ Empêche le navigateur de forcer une largeur fixe */
   min-width: fit-content !important;
-  width: 100% !important;
+  width: auto !important;
+  
+  /* Empêche le zoom automatique du texte sur iOS */
+  -webkit-text-size-adjust: 100%;
 }
 
-/* S'assurer que les conteneurs principaux ne coupent pas ce qui dépasse */
-.container, .main-content, .wrapper, .page-content {
-  overflow: visible !important;
-  min-width: fit-content !important;
+/* Correction iOS : empêche le zoom disgracieux sur les champs de formulaire */
+input, select, textarea {
+  font-size: 16px !important;
 }
 
-/* Optionnel : Ajouter une petite marge de sécurité sur mobile pour ne pas coller aux bords */
+/* Optionnel : petite marge sur mobile pour ne pas coller aux bords */
 @media (max-width: 768px) {
   body {
     padding: 8px !important;
