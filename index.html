@@ -1698,100 +1698,65 @@ option { background: #0a1a0d; }
 
 
 /* ════════════════════════════════════════
-   CORRECTION SCROLL HORIZONTAL MOBILE/TABLETTE
+   ZOOM AUTOMATIQUE MOBILE/TABLETTE
+   Réduit l'échelle de toute la page pour qu'elle tienne
    ════════════════════════════════════════ */
 
-/* 1. Forcer le scroll horizontal sur html/body */
+/* Sur tablette (≤ 1024px) : zoom à 75% */
+@media (max-width: 1024px) {
+  html {
+    overflow: auto !important;
+    overflow-x: auto !important;
+  }
+  
+  body {
+    transform: scale(0.75) !important;
+    transform-origin: top right !important; /* RTL : origine en haut à droite */
+    width: 133.33vw !important; /* 100 / 0.75 = 133.33 */
+    height: 133.33vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .shell {
+    width: 133.33vw !important;
+    height: 133.33vh !important;
+  }
+}
+
+/* Sur smartphone (≤ 768px) : zoom à 60% */
+@media (max-width: 768px) {
+  body {
+    transform: scale(0.6) !important;
+    width: 166.67vw !important; /* 100 / 0.6 = 166.67 */
+    height: 166.67vh !important;
+  }
+  
+  .shell {
+    width: 166.67vw !important;
+    height: 166.67vh !important;
+  }
+}
+
+/* Sur très petit écran (≤ 480px) : zoom à 50% */
+@media (max-width: 480px) {
+  body {
+    transform: scale(0.5) !important;
+    width: 200vw !important;
+    height: 200vh !important;
+  }
+  
+  .shell {
+    width: 200vw !important;
+    height: 200vh !important;
+  }
+}
+
+/* Empêcher le scroll horizontal de la page elle-même */
 html, body {
   overflow-x: auto !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-x pan-y !important;
-  min-width: fit-content !important;
-  width: auto !important;
-  -webkit-text-size-adjust: 100%;
-}
-
-/* 2. Déverrouiller le conteneur .shell */
-.shell {
-  overflow-x: auto !important;
-  overflow-y: auto !important;
-  min-width: fit-content !important;
-  width: auto !important;
-}
-
-/* 3. Déverrouiller la zone .main */
-.main {
-  overflow-x: auto !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  min-width: fit-content !important;
-}
-
-/* 4. Correction iOS : empêche le zoom sur les inputs */
-input, select, textarea {
-  font-size: 16px !important;
-}
-
-/* 5. Adapter le layout pour mobile/tablette */
-@media (max-width: 1024px) {
-  /* Cacher la sidebar sur tablette/mobile */
-  .sidebar {
-    display: none !important;
-  }
-  
-  /* Ajuster la grille pour occuper toute la largeur */
-  .shell {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: 72px 1fr !important;
-  }
-  
-  /* Réduire les paddings */
-  .main {
-    padding: 1rem !important;
-  }
-  
-  /* Empiler les formulaires verticalement */
-  .idea-layout {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .features-grid {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  
-  .analysis-shell {
-    grid-template-columns: 1fr !important;
-    height: auto !important;
-  }
-  
-  .map-interactive-layout {
-    grid-template-columns: 1fr !important;
-    height: auto !important;
-  }
-}
-
-@media (max-width: 768px) {
-  /* Encore plus compact sur smartphone */
-  .main {
-    padding: 0.75rem !important;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .page-title {
-    font-size: 22px !important;
-  }
-  
-  .glass-card {
-    padding: 1rem !important;
-  }
 }
 
 
