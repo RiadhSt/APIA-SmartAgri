@@ -1698,37 +1698,99 @@ option { background: #0a1a0d; }
 
 
 /* ════════════════════════════════════════
-   SCROLL LIBRE DANS LES 4 DIRECTIONS
+   CORRECTION SCROLL HORIZONTAL MOBILE/TABLETTE
    ════════════════════════════════════════ */
 
+/* 1. Forcer le scroll horizontal sur html/body */
 html, body {
-  /* ✅ Autorise le scroll dans les 4 directions */
   overflow-x: auto !important;
   overflow-y: auto !important;
-  
-  /* ✅ Active le défilement fluide au doigt sur iOS */
   -webkit-overflow-scrolling: touch !important;
-  
-  /* ✅ Autorise explicitement les gestes de glissement X et Y */
   touch-action: pan-x pan-y !important;
-  
-  /* ✅ Empêche le navigateur de forcer une largeur fixe */
   min-width: fit-content !important;
   width: auto !important;
-  
-  /* Empêche le zoom automatique du texte sur iOS */
   -webkit-text-size-adjust: 100%;
 }
 
-/* Correction iOS : empêche le zoom disgracieux sur les champs de formulaire */
+/* 2. Déverrouiller le conteneur .shell */
+.shell {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-width: fit-content !important;
+  width: auto !important;
+}
+
+/* 3. Déverrouiller la zone .main */
+.main {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  min-width: fit-content !important;
+}
+
+/* 4. Correction iOS : empêche le zoom sur les inputs */
 input, select, textarea {
   font-size: 16px !important;
 }
 
-/* Optionnel : petite marge sur mobile pour ne pas coller aux bords */
+/* 5. Adapter le layout pour mobile/tablette */
+@media (max-width: 1024px) {
+  /* Cacher la sidebar sur tablette/mobile */
+  .sidebar {
+    display: none !important;
+  }
+  
+  /* Ajuster la grille pour occuper toute la largeur */
+  .shell {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 72px 1fr !important;
+  }
+  
+  /* Réduire les paddings */
+  .main {
+    padding: 1rem !important;
+  }
+  
+  /* Empiler les formulaires verticalement */
+  .idea-layout {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .analysis-shell {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+  
+  .map-interactive-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+}
+
 @media (max-width: 768px) {
-  body {
-    padding: 8px !important;
+  /* Encore plus compact sur smartphone */
+  .main {
+    padding: 0.75rem !important;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .page-title {
+    font-size: 22px !important;
+  }
+  
+  .glass-card {
+    padding: 1rem !important;
   }
 }
 
