@@ -2331,7 +2331,6 @@ html, body {
 
 
 <!-- External SDKs -->
-<script src="https://lf-cdn.coze.com/obj/unpkg/flow-platform/chat-app-sdk/1.3.0-beta.1/libs/cn/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script>
@@ -3560,61 +3559,8 @@ function showPage(id, btn) {
       if (typeof window.__analysisInit === 'function') window.__analysisInit();
     }, 100);
   }
-
-  // Coze bot show/hide
-  if (id === 'agent') {
-    document.body.classList.add('coze-active');
-    setTimeout(initCoze, 200);
-  } else {
-    document.body.classList.remove('coze-active');
-    hideCoze();
-  }
 }
 
-/* ═══════════════════════════════════════════════════
-   COZE SDK
-   ═══════════════════════════════════════════════════ */
-function initCoze() {
-  if (typeof CozeWebSDK === 'undefined') {
-    console.warn('CozeWebSDK not loaded');
-    return;
-  }
-
-  if (!cozeReady) {
-    try {
-      cozeClient = new CozeWebSDK.WebChatClient({
-        config: { bot_id: '7612631903040077877' },
-        componentProps: {
-          title: 'APIA SmartAgri',
-          icon: 'https://i.ibb.co/fccKzcx/1.png'
-        },
-        auth: {
-          type: 'token',
-          token: 'pat_j8M',
-          onRefreshToken: () => 'pat_j8M'
-        }
-      });
-      cozeReady = true;
-    } catch (e) {
-      console.error('Coze init error:', e);
-      return;
-    }
-  }
-
-  let attempts = 0;
-  const showTimer = setInterval(() => {
-    if (cozeClient && typeof cozeClient.show === 'function') {
-      try { cozeClient.show(); } catch (e) {}
-    }
-    if (++attempts > 20) clearInterval(showTimer);
-  }, 100);
-}
-
-function hideCoze() {
-  try {
-    if (cozeClient && typeof cozeClient.hide === 'function') cozeClient.hide();
-  } catch (e) {}
-}
 
 /* ═══════════════════════════════════════════════════
    IFRAME HELPERS (Dashboard + Indicateurs)
