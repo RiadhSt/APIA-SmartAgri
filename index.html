@@ -1760,7 +1760,428 @@ html, body {
 }
 
 
+/* ════════════════════════════════════════
+   🌞 LIGHT MODE - الوضع الفاتح
+   ════════════════════════════════════════ */
 
+body.light-mode {
+  /* إعادة تعريف الألوان الأساسية */
+  --dark: #f5faf7;
+  --dark-2: #eaf3ec;
+  --dark-3: #dde9e0;
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(26, 107, 60, 0.15);
+  --glass-hover: rgba(255, 255, 255, 0.9);
+  --text-primary: #0d3d1e;
+  --text-secondary: rgba(45, 74, 53, 0.9);
+  --text-muted: rgba(74, 107, 83, 0.7);
+  --green-deep: #0d5c35;
+  --green-mid: #1a6b3c;
+  --green-light: #22c96f;
+  --green-glow: #1a8c4e;
+  --gold: #c8860a;
+  --gold-light: #d4a017;
+  --cream: #fbf9f4;
+}
+
+/* خلفية الصفحة */
+body.light-mode .bg-canvas {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, #d6eedd 0%, transparent 65%),
+    radial-gradient(ellipse 60% 80% at 90% 100%, #e8f5ed 0%, transparent 60%),
+    #f5faf7;
+}
+
+/* شبكة الخلفية */
+body.light-mode .bg-grid {
+  background-image:
+    linear-gradient(rgba(26, 107, 60, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 107, 60, 0.06) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+}
+
+/* الكرات المتوهجة */
+body.light-mode .orb-1 { background: rgba(34, 201, 111, 0.18); }
+body.light-mode .orb-2 { background: rgba(26, 140, 78, 0.22); }
+body.light-mode .orb-3 { background: rgba(200, 134, 10, 0.10); }
+
+/* Topbar */
+body.light-mode .topbar {
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .topbar::after {
+  background: linear-gradient(90deg, transparent, #1a6b3c, #c8860a, #1a6b3c, transparent);
+  opacity: 0.5;
+}
+
+/* Logo */
+body.light-mode .brand-logo {
+  background: linear-gradient(135deg, #1a6b3c, #22c96f);
+  box-shadow: 0 0 20px rgba(26, 107, 60, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+body.light-mode .brand-logo svg path:first-child {
+  fill: rgba(255, 255, 255, 0.25);
+  stroke: rgba(255, 255, 255, 0.9);
+}
+body.light-mode .brand-logo svg circle:first-of-type { fill: rgba(255, 255, 255, 0.95); }
+body.light-mode .brand-logo svg circle:last-of-type { fill: #1a6b3c; }
+
+body.light-mode .brand-name {
+  background: linear-gradient(90deg, #0d3d1e, #1a6b3c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status badge */
+body.light-mode .top-status {
+  background: rgba(26, 107, 60, 0.08);
+  border: 1px solid rgba(26, 107, 60, 0.15);
+  color: var(--text-muted);
+}
+body.light-mode .status-dot {
+  background: #1a8c4e;
+  box-shadow: 0 0 8px rgba(26, 140, 78, 0.5);
+}
+
+/* Language toggle */
+body.light-mode .lang-toggle {
+  background: rgba(26, 107, 60, 0.08);
+  border: 1px solid rgba(26, 107, 60, 0.15);
+}
+body.light-mode .lang-btn { color: var(--text-muted); }
+body.light-mode .lang-btn.active {
+  background: #1a6b3c;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(26, 107, 60, 0.3);
+}
+body.light-mode .lang-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(26, 107, 60, 0.12);
+}
+
+/* Sidebar */
+body.light-mode .sidebar {
+  background: rgba(255, 255, 255, 0.7);
+  border-right: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode [dir="rtl"] .sidebar {
+  border-right: none;
+  border-left: 1px solid rgba(26, 107, 60, 0.12);
+}
+
+/* Nav items */
+body.light-mode .nav-item { color: var(--text-secondary); }
+body.light-mode .nav-item:hover {
+  color: var(--text-primary);
+  border-color: rgba(26, 107, 60, 0.2);
+  background: rgba(26, 107, 60, 0.05);
+}
+body.light-mode .nav-item:hover::before {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.08), transparent);
+}
+body.light-mode .nav-item.active {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.15), rgba(34, 201, 111, 0.05));
+  border-color: rgba(26, 107, 60, 0.25);
+  color: var(--text-primary);
+}
+body.light-mode .nav-item.active .nav-icon {
+  background: #1a6b3c;
+  box-shadow: 0 0 14px rgba(26, 107, 60, 0.4);
+}
+body.light-mode .nav-icon {
+  background: rgba(26, 107, 60, 0.08);
+  border: 1px solid rgba(26, 107, 60, 0.15);
+}
+body.light-mode .nav-icon svg path,
+body.light-mode .nav-icon svg rect,
+body.light-mode .nav-icon svg circle,
+body.light-mode .nav-icon svg polyline {
+  stroke: #1a6b3c !important;
+  fill: #1a6b3c !important;
+}
+body.light-mode .nav-item.active .nav-icon svg path,
+body.light-mode .nav-item.active .nav-icon svg rect,
+body.light-mode .nav-item.active .nav-icon svg circle,
+body.light-mode .nav-item.active .nav-icon svg polyline {
+  stroke: #fff !important;
+  fill: #fff !important;
+}
+body.light-mode .nav-badge {
+  background: #1a6b3c;
+  color: #fff;
+}
+body.light-mode .active-bar {
+  background: #1a8c4e;
+  box-shadow: 0 0 8px rgba(26, 140, 78, 0.5);
+}
+
+/* Glass cards */
+body.light-mode .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+  box-shadow: 0 2px 12px rgba(26, 107, 60, 0.06);
+}
+body.light-mode .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(26, 107, 60, 0.15), transparent);
+}
+body.light-mode .glass-card:hover {
+  border-color: rgba(26, 107, 60, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 40px rgba(26, 107, 60, 0.12), 0 0 0 1px rgba(26, 107, 60, 0.1);
+}
+
+/* Feature cards icons */
+body.light-mode .fc-icon svg path,
+body.light-mode .fc-icon svg circle,
+body.light-mode .fc-icon svg rect,
+body.light-mode .fc-icon svg polyline {
+  stroke: #1a6b3c !important;
+  fill: rgba(26, 107, 60, 0.2) !important;
+}
+
+/* Buttons */
+body.light-mode .btn-primary {
+  background: linear-gradient(135deg, #1a6b3c, #22c96f);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(26, 107, 60, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+body.light-mode .btn-ghost {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+  color: var(--text-secondary);
+}
+body.light-mode .btn-ghost:hover {
+  border-color: rgba(26, 107, 60, 0.4);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Form elements */
+body.light-mode .form-select,
+body.light-mode .form-input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+  color: var(--text-primary);
+}
+body.light-mode .form-select:focus,
+body.light-mode .form-input:focus {
+  border-color: #1a6b3c;
+  box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.15);
+  background: #fff;
+}
+body.light-mode option { background: #fff; color: var(--text-primary); }
+
+/* Chips */
+body.light-mode .chip {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+  color: var(--text-secondary);
+}
+body.light-mode .chip:hover {
+  border-color: rgba(26, 107, 60, 0.4);
+  color: var(--text-primary);
+}
+body.light-mode .chip.selected {
+  background: rgba(26, 107, 60, 0.15);
+  border-color: rgba(26, 107, 60, 0.4);
+  color: #1a6b3c;
+  box-shadow: 0 0 8px rgba(26, 107, 60, 0.15);
+}
+
+/* Result panel */
+body.light-mode .result-placeholder {
+  border: 1px dashed rgba(26, 107, 60, 0.25);
+  color: var(--text-muted);
+}
+body.light-mode .result-placeholder svg circle,
+body.light-mode .result-placeholder svg path {
+  stroke: rgba(26, 107, 60, 0.4) !important;
+}
+body.light-mode .result-header {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.12), rgba(34, 201, 111, 0.05));
+  border: 1px solid rgba(26, 107, 60, 0.2);
+}
+body.light-mode .result-body {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(26, 107, 60, 0.15);
+}
+body.light-mode .result-tag {
+  color: #c8860a;
+  background: rgba(200, 134, 10, 0.1);
+  border: 1px solid rgba(200, 134, 10, 0.25);
+}
+body.light-mode .rm {
+  background: rgba(26, 107, 60, 0.06);
+  border: 1px solid rgba(26, 107, 60, 0.1);
+}
+body.light-mode .rm-val { color: #1a6b3c; }
+
+/* Analysis page */
+body.light-mode .analysis-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .analysis-card-title {
+  color: #1a6b3c;
+  border-bottom: 1px solid rgba(26, 107, 60, 0.2);
+}
+body.light-mode .analysis-filter-group select {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+  color: var(--text-primary);
+}
+body.light-mode .analysis-range input[type="range"] {
+  background: rgba(26, 107, 60, 0.15);
+}
+body.light-mode .analysis-range input[type="range"]::-webkit-slider-thumb {
+  background: #1a6b3c;
+  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(26, 107, 60, 0.4);
+}
+body.light-mode .analysis-custom-col {
+  background: rgba(26, 107, 60, 0.04);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .analysis-variable {
+  background: rgba(26, 107, 60, 0.1);
+  border: 1px solid rgba(26, 107, 60, 0.25);
+  color: var(--text-primary);
+}
+body.light-mode .analysis-variable:hover {
+  background: rgba(26, 107, 60, 0.18);
+  border-color: rgba(26, 107, 60, 0.5);
+}
+body.light-mode .analysis-dropzone {
+  background: rgba(26, 107, 60, 0.05);
+  border: 1.5px dashed rgba(26, 107, 60, 0.3);
+}
+body.light-mode .analysis-dropzone.drag-over {
+  background: rgba(26, 107, 60, 0.15);
+  border-color: #1a6b3c;
+}
+body.light-mode .analysis-drop-badge {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.3), rgba(34, 201, 111, 0.15));
+  border: 1px solid rgba(26, 107, 60, 0.4);
+  color: var(--text-primary);
+}
+body.light-mode .analysis-output-toggle button {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+  color: var(--text-secondary);
+}
+body.light-mode .analysis-output-toggle button.active {
+  background: linear-gradient(135deg, #1a6b3c, #22c96f);
+  color: #fff;
+}
+body.light-mode #dynamicTable th {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.3), rgba(34, 201, 111, 0.2));
+  color: #0d3d1e;
+}
+body.light-mode #dynamicTable td { color: var(--text-primary); }
+body.light-mode #dynamicTable tr:hover td { background: rgba(26, 107, 60, 0.06); }
+
+/* Map */
+body.light-mode .map-area-glass {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .leaflet-map-container {
+  background: #e8f5ed !important;
+  border: 1px solid rgba(26, 107, 60, 0.15);
+}
+body.light-mode .gov-toast {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(26, 107, 60, 0.2);
+}
+body.light-mode .toast-header-glass {
+  background: linear-gradient(135deg, rgba(26, 107, 60, 0.2), rgba(34, 201, 111, 0.1));
+  border-bottom: 1px solid rgba(26, 107, 60, 0.15);
+}
+body.light-mode .toast-header-glass h4 { color: var(--text-primary); }
+body.light-mode .toast-body-glass { color: var(--text-secondary); }
+body.light-mode .toast-body-glass li {
+  border-right: 2px solid #1a6b3c;
+  color: var(--text-primary);
+}
+body.light-mode [dir="rtl"] .toast-body-glass li {
+  border-right: none;
+  border-left: 2px solid #1a6b3c;
+}
+body.light-mode .opp-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .opp-card-glass:hover {
+  background: rgba(26, 107, 60, 0.08);
+  border-color: rgba(26, 107, 60, 0.3);
+}
+body.light-mode .opp-card-glass.active {
+  background: linear-gradient(135deg, rgba(200, 134, 10, 0.12), rgba(200, 134, 10, 0.04));
+  border-color: #c8860a;
+}
+body.light-mode .opp-card-title { color: var(--text-primary); }
+body.light-mode .opp-card-count {
+  background: rgba(26, 107, 60, 0.12);
+  color: #1a6b3c;
+}
+body.light-mode .opp-count-badge {
+  background: rgba(26, 107, 60, 0.1);
+  color: #1a6b3c;
+  border: 1px solid rgba(26, 107, 60, 0.2);
+}
+
+/* Embeds (Tableau) */
+body.light-mode .embed-wrapper {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .embed-toolbar {
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(26, 107, 60, 0.12);
+}
+body.light-mode .embed-iframe-container { background: #fff; }
+
+/* Generating animation */
+body.light-mode .generating {
+  background: linear-gradient(90deg, rgba(255,255,255,0.5) 25%, rgba(26, 107, 60, 0.1) 50%, rgba(255,255,255,0.5) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Scrollbars */
+body.light-mode .main::-webkit-scrollbar-thumb { background: rgba(26, 107, 60, 0.25); }
+body.light-mode .sidebar::-webkit-scrollbar-thumb { background: rgba(26, 107, 60, 0.2); }
+
+/* Theme toggle button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(26, 107, 60, 0.08);
+  border: 1px solid rgba(26, 107, 60, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+.theme-toggle:hover {
+  background: rgba(26, 107, 60, 0.15);
+  border-color: rgba(26, 107, 60, 0.3);
+  transform: rotate(15deg);
+}
+body.light-mode .theme-toggle {
+  background: rgba(200, 134, 10, 0.1);
+  border-color: rgba(200, 134, 10, 0.2);
+  color: #c8860a;
+}
+body.light-mode .theme-toggle:hover {
+  background: rgba(200, 134, 10, 0.18);
+}
   
 </style>  
 </head>
@@ -1797,8 +2218,13 @@ html, body {
       </div>
     </div>
 
-    <div class="topbar-right">
-      <div class="lang-toggle">
+<div class="topbar-right">
+  <!-- 🌞 زر تبديل الوضع -->
+  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="تبديل الوضع">
+    <span id="theme-icon">🌙</span>
+  </button>
+  
+  <div class="lang-toggle">
         <button class="lang-btn active" data-lang="fr">FR</button>
         <button class="lang-btn" data-lang="ar">عربي</button>
         <button class="lang-btn" data-lang="en">EN</button>
@@ -4913,6 +5339,109 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 });
+
+/* ════════════════════════════════════════
+   🌞 THEME TOGGLE - Light/Dark Mode
+   ════════════════════════════════════════ */
+
+function toggleTheme() {
+  const body = document.body;
+  const icon = document.getElementById('theme-icon');
+  const isLight = body.classList.toggle('light-mode');
+  
+  // تحديث الأيقونة
+  icon.textContent = isLight ? '☀️' : '🌙';
+  
+  // حفظ التفضيل
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  
+  // تحديث خريطة Leaflet
+  updateMapTheme(isLight);
+  
+  // تحديث الرسوم البيانية Chart.js
+  updateChartsTheme(isLight);
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  // إذا لم يكن هناك تفضيل محفوظ، استخدم إعدادات النظام
+  const useLight = savedTheme === 'light' || (savedTheme === null && !prefersDark);
+  
+  if (useLight) {
+    document.body.classList.add('light-mode');
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.textContent = '☀️';
+  }
+  
+  // تحديث الخريطة والرسوم البيانية
+  setTimeout(() => {
+    const isLight = document.body.classList.contains('light-mode');
+    updateMapTheme(isLight);
+    updateChartsTheme(isLight);
+  }, 500);
+}
+
+function updateMapTheme(isLight) {
+  if (typeof investmentMap === 'undefined' || !investmentMap) return;
+  
+  // إزالة الطبقة القديمة
+  investmentMap.eachLayer(layer => {
+    if (layer instanceof L.TileLayer) {
+      investmentMap.removeLayer(layer);
+    }
+  });
+  
+  // إضافة الطبقة المناسبة
+  const tileUrl = isLight
+    ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  
+  L.tileLayer(tileUrl, {
+    attribution: '© OpenStreetMap © CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(investmentMap);
+}
+
+function updateChartsTheme(isLight) {
+  if (typeof Chart === 'undefined') return;
+  
+  // تحديث الألوان الافتراضية
+  if (isLight) {
+    Chart.defaults.color = 'rgba(13, 61, 30, 0.85)';
+    Chart.defaults.borderColor = 'rgba(26, 107, 60, 0.12)';
+  } else {
+    Chart.defaults.color = 'rgba(230, 255, 240, 0.85)';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+  }
+  
+  // إعادة رسم الرسوم البيانية إن وجدت
+  if (typeof mainChart !== 'undefined' && mainChart) {
+    mainChart.options.scales.x.ticks.color = isLight ? 'rgba(13, 61, 30, 0.7)' : 'rgba(200, 230, 215, 0.7)';
+    mainChart.options.scales.y.ticks.color = isLight ? 'rgba(13, 61, 30, 0.7)' : 'rgba(200, 230, 215, 0.7)';
+    mainChart.options.scales.x.grid.color = isLight ? 'rgba(26, 107, 60, 0.08)' : 'rgba(255, 255, 255, 0.04)';
+    mainChart.options.scales.y.grid.color = isLight ? 'rgba(26, 107, 60, 0.08)' : 'rgba(255, 255, 255, 0.05)';
+    mainChart.options.plugins.legend.labels.color = isLight ? 'rgba(13, 61, 30, 0.85)' : 'rgba(230, 255, 240, 0.85)';
+    mainChart.update();
+  }
+  
+  if (typeof dynamicChart !== 'undefined' && dynamicChart) {
+    dynamicChart.options.scales.x.ticks.color = isLight ? 'rgba(13, 61, 30, 0.7)' : 'rgba(200, 230, 215, 0.7)';
+    dynamicChart.options.scales.y.ticks.color = isLight ? 'rgba(13, 61, 30, 0.7)' : 'rgba(200, 230, 215, 0.7)';
+    dynamicChart.options.scales.x.grid.color = isLight ? 'rgba(26, 107, 60, 0.08)' : 'rgba(255, 255, 255, 0.04)';
+    dynamicChart.options.scales.y.grid.color = isLight ? 'rgba(26, 107, 60, 0.08)' : 'rgba(255, 255, 255, 0.05)';
+    dynamicChart.options.plugins.legend.labels.color = isLight ? 'rgba(13, 61, 30, 0.85)' : 'rgba(230, 255, 240, 0.85)';
+    dynamicChart.update();
+  }
+}
+
+// تهيئة الوضع عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+});
+  
 </script>
 </body>
 </html>
