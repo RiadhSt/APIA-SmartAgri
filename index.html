@@ -1759,9 +1759,12 @@ html, body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-#tnLeafletMap {
-    background-color: #050b0d !important;
-  
+
+
+  /* تحويل خريطة OpenStreetMap إلى النمط الداكن وإبراز الحدود */
+#tnLeafletMap .leaflet-tile-pane {
+    filter: brightness(0.85) invert(1) contrast(1.5) hue-rotate(190deg) saturate(0.3);
+}
 </style>  
 </head>
 <body>
