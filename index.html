@@ -1761,7 +1761,7 @@ html, body {
 
 /* إخفاء كافة النصوص والأسماء وتعتيم الخريطة */
 #tnLeafletMap .leaflet-tile-pane {
-    filter: brightness(0.5) invert(1) contrast(1.8);
+    filter: brightness(0.6) invert(1) contrast(2) saturate(0.2);
 }
   
 </style>  
@@ -4673,7 +4673,7 @@ function initLeafletMap() {
     zoomControl: false
   });
   
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap'
 }).addTo(investmentMap);
