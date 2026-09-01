@@ -1759,9 +1759,9 @@ html, body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* تحويل خلفية الخريطة فقط إلى اللون الداكن دون التأثير على النقاط أو العناصر التفاعلية */
+/* إخفاء كافة النصوص والأسماء وتعتيم الخريطة */
 #tnLeafletMap .leaflet-tile-pane {
-    filter: brightness(0.7) invert(1) contrast(1.8) hue-rotate(180deg) saturate(0.3);
+    filter: brightness(0.6) invert(1) contrast(2) blur(0.5px);
 }
   
 </style>  
