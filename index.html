@@ -1761,7 +1761,7 @@ html, body {
 
 /* إخفاء كافة النصوص والأسماء وتعتيم الخريطة */
 #tnLeafletMap .leaflet-tile-pane {
-    filter: brightness(0.6) invert(1) contrast(2) saturate(0.2);
+    filter: brightness(0.7) contrast(1.5);
 }
   
 </style>  
@@ -4673,9 +4673,9 @@ function initLeafletMap() {
     zoomControl: false
   });
   
-L.tileLayer('https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16,
+    attribution: 'Tiles &copy; Esri'
 }).addTo(investmentMap);
   
   L.control.zoom({ position: 'bottomright' }).addTo(investmentMap);
