@@ -1759,10 +1759,8 @@ html, body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* إخفاء كافة النصوص والأسماء وتعتيم الخريطة */
-#tnLeafletMap .leaflet-tile-pane {
-    filter: brightness(0.85) invert(1) contrast(1.5) hue-rotate(190deg) saturate(0.3);
-}
+#tnLeafletMap {
+    background-color: #050b0d !important;
   
 </style>  
 </head>
@@ -4673,10 +4671,25 @@ function initLeafletMap() {
     zoomControl: false
   });
   
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 16,
-    attribution: 'Tiles &copy; Esri'
-}).addTo(investmentMap);
+// خريطة فارغة بخلفية داكنة
+const investmentMap = L.map('tnLeafletMap', {
+    attributionControl: false
+}).setView([34.0, 9.5], 6.5);
+
+// تحميل حدود تونس فقط (GeoJSON)
+fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions/tunisie/tunisie.geojson') // أو أي ملف GeoJSON لبحوذ تونس
+  .then(res => res.json())
+  .then(data => {
+      L.geoJSON(data, {
+          style: {
+              fillColor: '#0d1b1e',
+              weight: 1.5,
+              opacity: 1,
+              color: '#10b981', // لون حدود الولايات أخضر أنيق
+              fillOpacity: 0.8
+          }
+      }).addTo(investmentMap);
+  });
   
   L.control.zoom({ position: 'bottomright' }).addTo(investmentMap);
   
