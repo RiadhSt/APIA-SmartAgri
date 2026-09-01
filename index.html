@@ -1759,7 +1759,10 @@ html, body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-
+/* تحويل خلفية الخريطة فقط إلى اللون الداكن دون التأثير على النقاط أو العناصر التفاعلية */
+#tnLeafletMap .leaflet-tile-pane {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+}
   
 </style>  
 </head>
@@ -4670,10 +4673,9 @@ function initLeafletMap() {
     zoomControl: false
   });
   
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 20
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
 }).addTo(investmentMap);
   
   L.control.zoom({ position: 'bottomright' }).addTo(investmentMap);
