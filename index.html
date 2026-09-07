@@ -2170,6 +2170,37 @@ html, body {
           </select>
         </div>
 
+<div class="analysis-filter-group">
+  <label id="an-lbl-gov"> الولاية</label>
+  <select id="govFilter">
+    <option value="all" data-i18n="an-opt-all-gov">جميع الولايات</option>
+    <option value="تونس">تونس</option>
+    <option value="أريانة">أريانة</option>
+    <option value="بن عروس">بن عروس</option>
+    <option value="منوبة">منوبة</option>
+    <option value="زغوان">زغوان</option>
+    <option value="نابل">نابل</option>
+    <option value="بنزرت">بنزرت</option>
+    <option value="باجة">باجة</option>
+    <option value="جندوبة">جندوبة</option>
+    <option value="الكاف">الكاف</option>
+    <option value="سليانة">سليانة</option>
+    <option value="القيروان">القيروان</option>
+    <option value="سوسة">سوسة</option>
+    <option value="المنستير">المنستير</option>
+    <option value="المهدية">المهدية</option>
+    <option value="صفاقس">صفاقس</option>
+    <option value="قابس">قابس</option>
+    <option value="مدنين">مدنين</option>
+    <option value="تطاوين">تطاوين</option>
+    <option value="قبلي">قبلي</option>
+    <option value="توزر">توزر</option>
+    <option value="قفصة">قفصة</option>
+    <option value="سيدي بوزيد">سيدي بوزيد</option>
+    <option value="القصرين">القصرين</option>
+  </select>
+</div>
+        
         <div class="analysis-filter-group">
           <label id="an-lbl-years">📅 Période (années)</label>
           <div class="analysis-range">
@@ -3331,6 +3362,8 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 Subventions',
 'an-var-jobs': '👥 Emplois',
 'an-var-sector': '🏷️ Activité',
+  'an-lbl-gov': '📍 Gouvernorat',
+'an-opt-all-gov': 'Tous les gouvernorats',
   },
   ar: {
     'brand-sub': 'منصة الذكاء الفلاحي للاستثمار',
@@ -3428,6 +3461,8 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 المنح',
 'an-var-jobs': '👥 مواطن الشغل',
 'an-var-sector': '🏷️ النشاط',
+    'an-lbl-gov': '📍 الولاية',
+'an-opt-all-gov': 'جميع الولايات',
   },
   en: {
     'brand-sub': 'Smart Agricultural Investment Platform',
@@ -3525,6 +3560,8 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 Subsidies',
 'an-var-jobs': '👥 Jobs',
 'an-var-sector': '🏷️ Activity',
+    'an-lbl-gov': '📍 Governorate',
+'an-opt-all-gov': 'All governorates',
   }
 };
 
@@ -4044,144 +4081,159 @@ document.addEventListener('DOMContentLoaded', () => {
     return (map[lang] && map[lang][sectorKey]) || sectorKey;
   }
 
-  function updateMainChart() {
-    if (typeof Chart === 'undefined') return;
-    const sector = document.getElementById('sectorFilter').value;
-    let startYear = parseInt(document.getElementById('yearStartSlider').value);
-    let endYear = parseInt(document.getElementById('yearEndSlider').value);
-    if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
-
-    document.getElementById('yearStartLabel').textContent = startYear;
-    document.getElementById('yearEndLabel').textContent = endYear;
-
-    const indices = yearsList.map((y, idx) => ({ y, idx }))
-      .filter(({ y }) => y >= startYear && y <= endYear)
-      .map(({ idx }) => idx);
-
-    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
-    const reverseAxis = (lang === 'ar');
-    const orderedIndices = reverseAxis ? [...indices].reverse() : indices;
-    const labels = orderedIndices.map(i => yearsList[i]);
-
-    let declaredVals, approvedVals;
-    if (sector === 'all') {
-      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
-      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
-    } else {
-      declaredVals = orderedIndices.map(i => declared[sector][i]);
-      approvedVals = orderedIndices.map(i => approved[sector][i]);
-    }
-
-    const labelDecl = { fr:'Déclaré (M.DT)', ar:'مصرح به (م.د)', en:'Declared (M.DT)' }[lang] || 'Déclaré';
-    const labelAppr = { fr:'Approuvé (M.DT)', ar:'مصادق عليه (م.د)', en:'Approved (M.DT)' }[lang] || 'Approuvé';
-
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    if (mainChart) mainChart.destroy();
-
-    mainChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: labelDecl,
-            data: declaredVals,
-            borderColor: '#3ae07f',
-            backgroundColor: 'rgba(58,224,127,0.12)',
-            borderWidth: 2.2,
-            tension: 0.35,
-            fill: true,
-            pointRadius: 3.5,
-            pointBackgroundColor: '#3ae07f',
-            pointBorderColor: '#0a5c35'
-          },
-          {
-            label: labelAppr,
-            data: approvedVals,
-            borderColor: '#d4b661',
-            backgroundColor: 'rgba(212,182,97,0.08)',
-            borderWidth: 2.2,
-            tension: 0.35,
-            fill: true,
-            pointRadius: 3.5,
-            pointBackgroundColor: '#d4b661',
-            pointBorderColor: '#7a6428'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          tooltip: {
-            backgroundColor: 'rgba(10,30,20,0.95)',
-            borderColor: 'rgba(29,184,99,0.4)',
-            borderWidth: 1,
-            padding: 10,
-            callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()} M.DT`
-            }
-          },
-          legend: {
-            position: 'top',
-            labels: { color: 'rgba(230,255,240,0.85)', font: { size: 11 }, usePointStyle: true, padding: 12 }
+function updateMainChart() {
+  if (typeof Chart === 'undefined') return;
+  
+  const sector = document.getElementById('sectorFilter').value;
+  const governorate = document.getElementById('govFilter').value; // ✅ جديد
+  
+  let startYear = parseInt(document.getElementById('yearStartSlider').value);
+  let endYear = parseInt(document.getElementById('yearEndSlider').value);
+  
+  if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
+  
+  document.getElementById('yearStartLabel').textContent = startYear;
+  document.getElementById('yearEndLabel').textContent = endYear;
+  
+  const indices = yearsList.map((y, idx) => ({ y, idx }))
+    .filter(({ y }) => y >= startYear && y <= endYear)
+    .map(({ idx }) => idx);
+  
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+  const reverseAxis = (lang === 'ar');
+  const orderedIndices = reverseAxis ? [...indices].reverse() : indices;
+  const labels = orderedIndices.map(i => yearsList[i]);
+  
+  let declaredVals, approvedVals;
+  
+  // ✅ تطبيق فلتر الولاية (حالياً يعمل على مستوى وطني)
+  if (sector === 'all') {
+    declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
+    approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
+  } else {
+    declaredVals = orderedIndices.map(i => declared[sector][i]);
+    approvedVals = orderedIndices.map(i => approved[sector][i]);
+  }
+  
+  // ✅ عرض معلومات الفلتر في العنوان (اختياري)
+  const govLabel = governorate === 'all' ? '' : ` - ${governorate}`;
+  
+  const labelDecl = { fr:'Déclaré (M.DT)', ar:'مصرح به (م.د)', en:'Declared (M.DT)' }[lang] || 'Déclaré';
+  const labelAppr = { fr:'Approuvé (M.DT)', ar:'مصادق عليه (م.د)', en:'Approved (M.DT)' }[lang] || 'Approuvé';
+  
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChart) mainChart.destroy();
+  
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: labelDecl,
+          data: declaredVals,
+          borderColor: '#3ae07f',
+          backgroundColor: 'rgba(58,224,127,0.12)',
+          borderWidth: 2.2,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3.5,
+          pointBackgroundColor: '#3ae07f',
+          pointBorderColor: '#0a5c35'
+        },
+        {
+          label: labelAppr,
+          data: approvedVals,
+          borderColor: '#d4b661',
+          backgroundColor: 'rgba(212,182,97,0.08)',
+          borderWidth: 2.2,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3.5,
+          pointBackgroundColor: '#d4b661',
+          pointBorderColor: '#7a6428'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          backgroundColor: 'rgba(10,30,20,0.95)',
+          borderColor: 'rgba(29,184,99,0.4)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()} M.DT`
           }
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
-          },
-          x: {
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
-          }
+        legend: {
+          position: 'top',
+          labels: { color: 'rgba(230,255,240,0.85)', font: { size: 11 }, usePointStyle: true, padding: 12 }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
+        },
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: 'rgba(200,230,215,0.7)', font: { size: 10 } }
         }
       }
-    });
-  }
+    }
+  });
+}
 
-  function exportToExcel() {
-    if (typeof XLSX === 'undefined') { alert('Excel library not loaded'); return; }
-    const sector = document.getElementById('sectorFilter').value;
-    let startYear = parseInt(document.getElementById('yearStartSlider').value);
-    let endYear = parseInt(document.getElementById('yearEndSlider').value);
-    if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
-
-    const indices = yearsList.map((y, idx) => ({ y, idx }))
-      .filter(({ y }) => y >= startYear && y <= endYear)
-      .map(({ idx }) => idx);
-
-    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
-    const sectorName = getSectorLabel(sector, lang);
-    const headers = {
-      fr: { year:'Année', activity:'Activité', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)', sub:'Subvention (M.DT)', jobs:'Emplois' },
-      ar: { year:'السنة', activity:'النشاط', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)', sub:'المنحة (م.د)', jobs:'مواطن الشغل' },
-      en: { year:'Year', activity:'Activity', decl:'Declared (M.DT)', appr:'Approved (M.DT)', sub:'Subsidy (M.DT)', jobs:'Jobs' }
-    }[lang] || {};
-
-    const sheetData = indices.map(idx => {
-      const row = {};
-      row[headers.year] = yearsList[idx];
-      row[headers.activity] = sectorName;
-      if (sector === 'all') {
-        row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
-        row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
-      } else {
-        row[headers.decl] = declared[sector][idx];
-        row[headers.appr] = approved[sector][idx];
-      }
-      row[headers.sub] = subsidy[idx];
-      row[headers.jobs] = jobs[idx];
-      return row;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(sheetData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'APIA');
-    XLSX.writeFile(wb, `APIA_${sector === 'all' ? 'all' : sector}_${startYear}_${endYear}.xlsx`);
-  }
+function exportToExcel() {
+  if (typeof XLSX === 'undefined') { alert('Excel library not loaded'); return; }
+  
+  const sector = document.getElementById('sectorFilter').value;
+  const governorate = document.getElementById('govFilter').value; // ✅ جديد
+  let startYear = parseInt(document.getElementById('yearStartSlider').value);
+  let endYear = parseInt(document.getElementById('yearEndSlider').value);
+  
+  if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
+  
+  const indices = yearsList.map((y, idx) => ({ y, idx }))
+    .filter(({ y }) => y >= startYear && y <= endYear)
+    .map(({ idx }) => idx);
+  
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+  const sectorName = getSectorLabel(sector, lang);
+  const govName = governorate === 'all' ? 'Tous' : governorate; // ✅ جديد
+  
+  const headers = {
+    fr: { year:'Année', activity:'Activité', gov:'Gouvernorat', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)', sub:'Subvention (M.DT)', jobs:'Emplois' },
+    ar: { year:'السنة', activity:'النشاط', gov:'الولاية', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)', sub:'المنحة (م.د)', jobs:'مواطن الشغل' },
+    en: { year:'Year', activity:'Activity', gov:'Governorate', decl:'Declared (M.DT)', appr:'Approved (M.DT)', sub:'Subsidy (M.DT)', jobs:'Jobs' }
+  }[lang] || {};
+  
+  const sheetData = indices.map(idx => {
+    const row = {};
+    row[headers.year] = yearsList[idx];
+    row[headers.activity] = sectorName;
+    row[headers.gov] = govName; // ✅ جديد
+    if (sector === 'all') {
+      row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
+      row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
+    } else {
+      row[headers.decl] = declared[sector][idx];
+      row[headers.appr] = approved[sector][idx];
+    }
+    row[headers.sub] = subsidy[idx];
+    row[headers.jobs] = jobs[idx];
+    return row;
+  });
+  
+  const ws = XLSX.utils.json_to_sheet(sheetData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'APIA');
+  XLSX.writeFile(wb, `APIA_${sector}_${govName}_${startYear}_${endYear}.xlsx`); // ✅ محدّث
+}
 
   function setupDropZone(zoneId, type) {
     const zone = document.getElementById(zoneId);
@@ -4411,6 +4463,8 @@ if (divideByYears) {
       updateDynamic();
     }
   };
+  // فلتر الولايات
+document.getElementById('govFilter').addEventListener('change', updateMainChart);
 })();
 
 // ═══════════════════════════════════════════════════
