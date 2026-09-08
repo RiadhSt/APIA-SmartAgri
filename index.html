@@ -4362,7 +4362,7 @@ function updateMainChart() {
   if (typeof Chart === 'undefined') return;
   
   const sector = document.getElementById('sectorFilter').value;
-  const governorate = document.getElementById('govFilter').value; // ✅ فلتر الولاية
+  const governorate = document.getElementById('govFilter').value; // ✅ جديد
   
   let startYear = parseInt(document.getElementById('yearStartSlider').value);
   let endYear = parseInt(document.getElementById('yearEndSlider').value);
@@ -4372,62 +4372,36 @@ function updateMainChart() {
   document.getElementById('yearStartLabel').textContent = startYear;
   document.getElementById('yearEndLabel').textContent = endYear;
   
-  const yearsInRange = yearsList.filter(y => y >= startYear && y <= endYear);
+  const indices = yearsList.map((y, idx) => ({ y, idx }))
+    .filter(({ y }) => y >= startYear && y <= endYear)
+    .map(({ idx }) => idx);
+  
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
   const reverseAxis = (lang === 'ar');
-  const labels = reverseAxis ? [...yearsInRange].reverse() : yearsInRange;
+  const orderedIndices = reverseAxis ? [...indices].reverse() : indices;
+  const labels = orderedIndices.map(i => yearsList[i]);
   
-  // ✅ حساب القيم حسب الولاية المختارة
-  let declaredVals = [];
-  let approvedVals = [];
-  
-  labels.forEach(year => {
-    const yearStr = year.toString();
-    const yearData = governorateInvestmentData[yearStr];
-    
-    if (!yearData) {
-      declaredVals.push(0);
-      approvedVals.push(0);
-      return;
-    }
-    
-    let declSum = 0;
-    let apprSum = 0;
-    
-    if (sector === 'all') {
-      // جميع القطاعات
-      sectors.forEach(s => {
-        if (governorate === 'all') {
-          // جميع الولايات
-          Object.values(yearData['تصاريح'][s] || {}).forEach(v => declSum += v);
-          Object.values(yearData['مصادقات'][s] || {}).forEach(v => apprSum += v);
-        } else {
-          // ولاية معينة
-          declSum += (yearData['تصاريح'][s]?.[governorate] || 0);
-          apprSum += (yearData['مصادقات'][s]?.[governorate] || 0);
-        }
-      });
+  let declaredVals, approvedVals;
+  if (sector === 'all') {
+    if (governorate === 'all') {
+      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
+      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
     } else {
-      // قطاع معين
-      if (governorate === 'all') {
-        // جميع الولايات
-        Object.values(yearData['تصاريح'][sector] || {}).forEach(v => declSum += v);
-        Object.values(yearData['مصادقات'][sector] || {}).forEach(v => apprSum += v);
-      } else {
-        // ولاية معينة
-        declSum = yearData['تصاريح'][sector]?.[governorate] || 0;
-        apprSum = yearData['مصادقات'][sector]?.[governorate] || 0;
-      }
+      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (declared[s][i] / governorates.length), 0));
+      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (approved[s][i] / governorates.length), 0));
     }
-    
-    declaredVals.push(declSum);
-    approvedVals.push(apprSum);
-  });
+  } else {
+    if (governorate === 'all') {
+      declaredVals = orderedIndices.map(i => declared[sector][i]);
+      approvedVals = orderedIndices.map(i => approved[sector][i]);
+    } else {
+      declaredVals = orderedIndices.map(i => declared[sector][i] / governorates.length);
+      approvedVals = orderedIndices.map(i => approved[sector][i] / governorates.length);
+    }
+  }
   
-  // ✅ عنوان ديناميكي حسب الفلاتر
-  let chartTitle = '';
-  if (governorate !== 'all') chartTitle += `${governorate} - `;
-  if (sector !== 'all') chartTitle += `${sector} - `;
+  // ✅ عرض معلومات الفلتر في العنوان (اختياري)
+  const govLabel = governorate === 'all' ? '' : ` - ${governorate}`;
   
   const labelDecl = { fr:'Déclaré (M.DT)', ar:'مصرح به (م.د)', en:'Declared (M.DT)' }[lang] || 'Déclaré';
   const labelAppr = { fr:'Approuvé (M.DT)', ar:'مصادق عليه (م.د)', en:'Approved (M.DT)' }[lang] || 'Approuvé';
@@ -4470,12 +4444,6 @@ function updateMainChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: chartTitle || (lang === 'ar' ? 'تطور الاستثمارات' : 'Évolution des investissements'),
-          color: 'rgba(230,255,240,0.9)',
-          font: { size: 13, weight: '600' }
-        },
         tooltip: {
           backgroundColor: 'rgba(10,30,20,0.95)',
           borderColor: 'rgba(29,184,99,0.4)',
@@ -4509,98 +4477,47 @@ function exportToExcel() {
   if (typeof XLSX === 'undefined') { alert('Excel library not loaded'); return; }
   
   const sector = document.getElementById('sectorFilter').value;
-  const governorate = document.getElementById('govFilter').value; // ✅ فلتر الولاية
-  
+  const governorate = document.getElementById('govFilter').value; // ✅ جديد
   let startYear = parseInt(document.getElementById('yearStartSlider').value);
   let endYear = parseInt(document.getElementById('yearEndSlider').value);
   
   if (startYear > endYear) [startYear, endYear] = [endYear, startYear];
   
+  const indices = yearsList.map((y, idx) => ({ y, idx }))
+    .filter(({ y }) => y >= startYear && y <= endYear)
+    .map(({ idx }) => idx);
+  
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
   const sectorName = getSectorLabel(sector, lang);
-  const govName = governorate === 'all' ? (lang === 'ar' ? 'جميع الولايات' : 'Tous') : governorate;
+  const govName = governorate === 'all' ? 'Tous' : governorate; // ✅ جديد
   
-  // ✅ عناوين الأعمدة حسب اللغة
   const headers = {
-    fr: { year:'Année', sector:'Secteur', gov:'Gouvernorat', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)' },
-    ar: { year:'السنة', sector:'القطاع', gov:'الولاية', decl:'مصرح به (م.د)', appr:'مصادق عليه (م.د)' },
-    en: { year:'Year', sector:'Sector', gov:'Governorate', decl:'Declared (M.DT)', appr:'Approved (M.DT)' }
+    fr: { year:'Année', activity:'Activité', gov:'Gouvernorat', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)', sub:'Subvention (M.DT)', jobs:'Emplois' },
+    ar: { year:'السنة', activity:'النشاط', gov:'الولاية', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)', sub:'المنحة (م.د)', jobs:'مواطن الشغل' },
+    en: { year:'Year', activity:'Activity', gov:'Governorate', decl:'Declared (M.DT)', appr:'Approved (M.DT)', sub:'Subsidy (M.DT)', jobs:'Jobs' }
   }[lang] || {};
   
-  const sheetData = [];
-  
-  yearsList.forEach(year => {
-    if (year < startYear || year > endYear) return;
-    
-    const yearStr = year.toString();
-    const yearData = governorateInvestmentData[yearStr];
-    if (!yearData) return;
-    
+  const sheetData = indices.map(idx => {
+    const row = {};
+    row[headers.year] = yearsList[idx];
+    row[headers.activity] = sectorName;
+    row[headers.gov] = governorate === 'all' ? 'Toutes' : governorate;
     if (sector === 'all') {
-      sectors.forEach(s => {
-        if (governorate === 'all') {
-          // جميع الولايات - سطر لكل ولاية
-          governorates.forEach(gov => {
-            const decl = yearData['تصاريح'][s]?.[gov] || 0;
-            const appr = yearData['مصادقات'][s]?.[gov] || 0;
-            sheetData.push({
-              [headers.year]: year,
-              [headers.sector]: getSectorLabel(s, lang),
-              [headers.gov]: gov,
-              [headers.decl]: decl,
-              [headers.appr]: appr
-            });
-          });
-        } else {
-          // ولاية معينة
-          const decl = yearData['تصاريح'][s]?.[governorate] || 0;
-          const appr = yearData['مصادقات'][s]?.[governorate] || 0;
-          sheetData.push({
-            [headers.year]: year,
-            [headers.sector]: getSectorLabel(s, lang),
-            [headers.gov]: governorate,
-            [headers.decl]: decl,
-            [headers.appr]: appr
-          });
-        }
-      });
+      row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
+      row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
     } else {
-      // قطاع معين
-      if (governorate === 'all') {
-        // جميع الولايات
-        governorates.forEach(gov => {
-          const decl = yearData['تصاريح'][sector]?.[gov] || 0;
-          const appr = yearData['مصادقات'][sector]?.[gov] || 0;
-          sheetData.push({
-            [headers.year]: year,
-            [headers.sector]: sectorName,
-            [headers.gov]: gov,
-            [headers.decl]: decl,
-            [headers.appr]: appr
-          });
-        });
-      } else {
-        // ولاية معينة + قطاع معين
-        const decl = yearData['تصاريح'][sector]?.[governorate] || 0;
-        const appr = yearData['مصادقات'][sector]?.[governorate] || 0;
-        sheetData.push({
-          [headers.year]: year,
-          [headers.sector]: sectorName,
-          [headers.gov]: governorate,
-          [headers.decl]: decl,
-          [headers.appr]: appr
-        });
-      }
+      row[headers.decl] = declared[sector][idx];
+      row[headers.appr] = approved[sector][idx];
     }
+    row[headers.sub] = subsidy[idx];
+    row[headers.jobs] = jobs[idx];
+    return row;
   });
   
   const ws = XLSX.utils.json_to_sheet(sheetData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'APIA');
-  
-  // ✅ اسم الملف ديناميكي حسب الفلاتر
-  const fileName = `APIA_${govName}_${sector === 'all' ? 'all' : sector}_${startYear}_${endYear}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+    XLSX.writeFile(wb, `APIA_${sector === 'all' ? 'all' : sector}_${governorate === 'all' ? 'all' : governorate}_${startYear}_${endYear}.xlsx`);
 }
 
   function setupDropZone(zoneId, type) {
@@ -4771,79 +4688,75 @@ if (divideByYears) {
     updateDynamic();
   }
 
-function initAnalysisPage() {
-  if (initialized) return;
-  initialized = true;
-  applyChartTheme();
-  
-  // Variable drag sources
-  document.querySelectorAll('.analysis-variable').forEach(el => {
-    el.addEventListener('dragstart', function(e) {
-      e.dataTransfer.setData('text/plain', this.getAttribute('data-field'));
-      e.dataTransfer.effectAllowed = 'copy';
+  function initAnalysisPage() {
+    if (initialized) return;
+    initialized = true;
+    applyChartTheme();
+
+    // Variable drag sources
+    document.querySelectorAll('.analysis-variable').forEach(el => {
+      el.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-field'));
+        e.dataTransfer.effectAllowed = 'copy';
+      });
     });
-  });
-  
-  setupDropZone('zoneX', 'x');
-  setupDropZone('zoneY', 'y');
-  setupDropZone('zoneGroup', 'group');
-  
-  // Filters
-  const startSlider = document.getElementById('yearStartSlider');
-  const endSlider = document.getElementById('yearEndSlider');
-  
-  startSlider.addEventListener('input', () => {
-    if (parseInt(startSlider.value) > parseInt(endSlider.value)) endSlider.value = startSlider.value;
-    updateMainChart();
-  });
-  
-  endSlider.addEventListener('input', () => {
-    if (parseInt(endSlider.value) < parseInt(startSlider.value)) startSlider.value = endSlider.value;
-    updateMainChart();
-  });
-  
-  document.getElementById('sectorFilter').addEventListener('change', updateMainChart);
-  
-  // ✅ فلتر الولايات
-  const govFilter = document.getElementById('govFilter');
-  if (govFilter) {
-    govFilter.addEventListener('change', updateMainChart);
-  }
-  
-  // Mode toggle
-  document.getElementById('btnChart').addEventListener('click', () => setDynamicMode('chart'));
-  document.getElementById('btnTable').addEventListener('click', () => setDynamicMode('table'));
-  
-  // Export
-  document.getElementById('an-export-btn').addEventListener('click', exportToExcel);
-  
-  // Resize observers
-  const ro = new ResizeObserver(() => {
-    if (mainChart) mainChart.resize();
-    if (dynamicChart) dynamicChart.resize();
-  });
-  ro.observe(document.getElementById('mainChart').parentElement);
-  ro.observe(document.getElementById('dynamicCanvas').parentElement);
-  
-  window.addEventListener('resize', () => {
-    if (mainChart) mainChart.resize();
-    if (dynamicChart) dynamicChart.resize();
-  });
-  
-  updateMainChart();
+
+    setupDropZone('zoneX', 'x');
+    setupDropZone('zoneY', 'y');
+    setupDropZone('zoneGroup', 'group');
+
+    // Filters
+    const startSlider = document.getElementById('yearStartSlider');
+    const endSlider = document.getElementById('yearEndSlider');
+    startSlider.addEventListener('input', () => {
+      if (parseInt(startSlider.value) > parseInt(endSlider.value)) endSlider.value = startSlider.value;
+      updateMainChart();
+    });
+    endSlider.addEventListener('input', () => {
+      if (parseInt(endSlider.value) < parseInt(startSlider.value)) startSlider.value = endSlider.value;
+      updateMainChart();
+    });
+    document.getElementById('sectorFilter').addEventListener('change', updateMainChart);
+    // ✅ فلتر الولايات
+const govFilter = document.getElementById('govFilter');
+if (govFilter) {
+  govFilter.addEventListener('change', updateMainChart);
 }
+    document.getElementById('govFilter').addEventListener('change', updateMainChart);
 
-// Expose hooks for global navigation + language switching
-window.__analysisInit = initAnalysisPage;
-window.__analysisRefresh = function() {
-  if (initialized) {
+    // Mode toggle
+    document.getElementById('btnChart').addEventListener('click', () => setDynamicMode('chart'));
+    document.getElementById('btnTable').addEventListener('click', () => setDynamicMode('table'));
+
+    // Export
+    document.getElementById('an-export-btn').addEventListener('click', exportToExcel);
+
+    // Resize observers
+    const ro = new ResizeObserver(() => {
+      if (mainChart) mainChart.resize();
+      if (dynamicChart) dynamicChart.resize();
+    });
+    ro.observe(document.getElementById('mainChart').parentElement);
+    ro.observe(document.getElementById('dynamicCanvas').parentElement);
+    window.addEventListener('resize', () => {
+      if (mainChart) mainChart.resize();
+      if (dynamicChart) dynamicChart.resize();
+    });
+
     updateMainChart();
-    updateDynamic();
   }
-};
+
+  // Expose hooks for global navigation + language switching
+  window.__analysisInit = initAnalysisPage;
+  window.__analysisRefresh = function() {
+    if (initialized) {
+      updateMainChart();
+      updateDynamic();
+    }
+  };
+  // فلتر الولايات
+document.getElementById('govFilter').addEventListener('change', updateMainChart);
 })();
-
-
 
 // ═══════════════════════════════════════════════════
 // TUNISIA SVG MAP LOGIC
