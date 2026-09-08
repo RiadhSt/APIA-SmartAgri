@@ -4949,7 +4949,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // TUNISIA LEAFLET MAP - INTEGRATED VERSION
 // ═══════════════════════════════════════════════════
 
-const governorateInvestmentData = {
+const governorateOpportunities = {
   "تونس": ["تكثيف الزراعات الجديدة القابلة للتصدير (القنارية)", "تأهيل هياكل مهنية لدعم الخدمات الفلاحية", "تركيز وحدات لتحويل وتكييف المنتوجات الفلاحية والبحرية"],
   "أريانة": ["تكثيف الزراعات القابلة للتصدير (القنارية)", "تأهيل هياكل مهنية للخدمات الفلاحية", "الاستثمار في الصناعات الغذائية", "تربية الأبقار الحلوب وتسمين العجول", "تربية الماشية الصغرى"],
   "منوبة": ["تكثيف زراعة الخضروات المميزة (القنارية، الطماطم للتجفيف)", "غراسة الأشجار المثمرة المكثفة (تفاح، عوينة، خوخ، إجاص)", "الزراعات الكبرى وتربية الأغنام", "إحداث منابت الأشجار والخضروات", "تربية الماشية الصغرى والأبقار الحلوب", "مخازن التبريد", "التحويل الأولي المندمج", "خدمات الميكنة والنقل المبرد"],
@@ -4995,7 +4995,7 @@ let selectedGov = null;
 
 // Build reverse index
 const oppToGovernorates = {};
-Object.entries(governorateInvestmentData).forEach(([gov, opps]) => {
+Object.entries(governorateOpportunities).forEach(([gov, opps]) => {
   opps.forEach(opp => {
     if (!oppToGovernorates[opp]) oppToGovernorates[opp] = [];
     if (!oppToGovernorates[opp].includes(gov)) oppToGovernorates[opp].push(gov);
@@ -5095,7 +5095,7 @@ function selectGovernorate(name) {
   const toast = document.getElementById('govToast');
   const title = document.getElementById('toastTitle');
   const body = document.getElementById('toastBody');
-  const opps = governorateInvestmentData[name] || [];
+  const opps = governorateOpportunities[name] || [];
   
   title.textContent = `📍 ${name}`;
   body.innerHTML = opps.length ? 
