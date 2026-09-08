@@ -2187,7 +2187,7 @@ html, body {
 <div class="analysis-filter-group">
   <label id="an-lbl-gov"> الولاية</label>
   <select id="govFilter">
-    <option value="all" data-i18n="an-opt-all-gov">جميع الولايات</option>
+    <option value="all">جميع الولايات</option>
     <option value="تونس">تونس</option>
     <option value="أريانة">أريانة</option>
     <option value="بن عروس">بن عروس</option>
@@ -4304,22 +4304,22 @@ const governorateInvestmentData = {
 // ✅ الجديد (بيانات مفصلة حسب الولايات)
 const governorates = ['تونس', 'أريانة', 'بن عروس', 'منوبة', 'زغوان', 'نابل', 'بنزرت', 'باجة', 'جندوبة', 'الكاف', 'سليانة', 'القيروان', 'سوسة', 'المنستير', 'المهدية', 'صفاقس', 'قابس', 'مدنين', 'تطاوين', 'قبلي', 'توزر', 'قفصة', 'سيدي بوزيد', 'القصرين'];
 
+// ✅ بناء dataset مع بيانات الولايات
 const dynamicData = [];
 for (let i = 0; i < yearsList.length; i++) {
   const year = yearsList[i].toString();
   for (const s of sectors) {
-    for (const g of governorates) {
-      const declaredVal = governorateInvestmentData[year]?.['تصاريح']?.[s]?.[g] || 0;
-      const approvedVal = governorateInvestmentData[year]?.['مصادقات']?.[s]?.[g] || 0;
-      
+    for (const g of governoratesList) {
+      const declVal = governorateStatsData[year]?.['تصاريح']?.[s]?.[g] ?? (declared[s][i] / governoratesList.length);
+      const apprVal = governorateStatsData[year]?.['مصادقات']?.[s]?.[g] ?? (approved[s][i] / governoratesList.length);
       dynamicData.push({
         year: yearsList[i],
         sector: s,
         governorate: g,
-        declared_value: declaredVal,
-        approved_value: approvedVal,
-        subsidy: (declaredVal + approvedVal) / 2, // يمكن تعديله لاحقاً
-        jobs: Math.round((declaredVal + approvedVal) * 10) // تقدير تقريبي
+        declared_value: declVal,
+        approved_value: apprVal,
+        subsidy: subsidy[i] / 5,
+        jobs: Math.round(jobs[i] / 5)
       });
     }
   }
@@ -4339,15 +4339,15 @@ for (let i = 0; i < yearsList.length; i++) {
     Chart.defaults.font.family = "'Outfit', 'Tajawal', sans-serif";
   }
 
-  function getFieldLabel(field) {
-    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
-    const map = {
-      fr: { year:'📅 Année', sector:'🏷️ Activité', governorate:' Gouvernorat', declared_value:'💰 Déclarations', approved_value:'✅ Approbations', subsidy:'🎁 Subventions', jobs:'👥 Emplois' },
-      ar: { year:' السنة', sector:'🏷️ النشاط', governorate:'📍 الولاية', declared_value:' التصاريح', approved_value:'✅ المصادقات', subsidy:'🎁 المنح', jobs:' مواطن الشغل' },
-      en: { year:'📅 Year', sector:'🏷️ Activity', governorate:'📍 Governorate', declared_value:'💰 Declared', approved_value:'✅ Approved', subsidy:'🎁 Subsidies', jobs:'👥 Jobs' }
-    };
-    return (map[lang] && map[lang][field]) || field;
-  }
+function getFieldLabel(field) {
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
+  const map = {
+    fr: { year:'📅 Année', sector:'🏷️ Activité', governorate:'📍 Gouvernorat', declared_value:'💰 Déclarations', approved_value:'✅ Approbations', subsidy:'🎁 Subventions', jobs:'👥 Emplois' },
+    ar: { year:'📅 السنة', sector:'️ النشاط', governorate:'📍 الولاية', declared_value:'💰 التصاريح', approved_value:'✅ المصادقات', subsidy:' المنح', jobs:'👥 مواطن الشغل' },
+    en: { year:' Year', sector:'🏷️ Activity', governorate:'📍 Governorate', declared_value:' Declared', approved_value:'✅ Approved', subsidy:'🎁 Subsidies', jobs:' Jobs' }
+  };
+  return (map[lang] && map[lang][field]) || field;
+}
 
   function getSectorLabel(sectorKey, lang) {
     const map = {
@@ -4719,8 +4719,7 @@ if (divideByYears) {
     document.getElementById('sectorFilter').addEventListener('change', updateMainChart);
     // ✅ فلتر الولايات
 const govFilter = document.getElementById('govFilter');
-if (govFilter) {
-  govFilter.addEventListener('change', updateMainChart);
+if (govFilter) govFilter.addEventListener('change', updateMainChart);
 }
     document.getElementById('govFilter').addEventListener('change', updateMainChart);
 
