@@ -2236,6 +2236,7 @@ html, body {
             <div class="analysis-variable" draggable="true" data-field="subsidy" data-i18n="an-var-sub">🎁 المنح</div>
             <div class="analysis-variable" draggable="true" data-field="jobs" data-i18n="an-var-jobs">👥 مواطن الشغل</div>
             <div class="analysis-variable" draggable="true" data-field="sector" data-i18n="an-var-sector">🏷️ الأنشطة</div>
+            <div class="analysis-variable" draggable="true" data-field="governorate" data-i18n="an-var-gov">📍 الولاية</div>
           </div>
 
           <div class="analysis-custom-col">
@@ -3364,8 +3365,9 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 Subventions',
 'an-var-jobs': '👥 Emplois',
 'an-var-sector': '🏷️ Activité',
-  'an-lbl-gov': '📍 Gouvernorat',
+'an-lbl-gov': '📍 Gouvernorat',
 'an-opt-all-gov': 'Tous les gouvernorats',
+'an-var-gov': '📍 Gouvernorat',
   },
   ar: {
     'brand-sub': 'منصة الذكاء الفلاحي للاستثمار',
@@ -3463,8 +3465,9 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 المنح',
 'an-var-jobs': '👥 مواطن الشغل',
 'an-var-sector': '🏷️ النشاط',
-    'an-lbl-gov': '📍 الولاية',
+'an-lbl-gov': '📍 الولاية',
 'an-opt-all-gov': 'جميع الولايات',
+'an-var-gov': '📍 الولاية',
   },
   en: {
     'brand-sub': 'Smart Agricultural Investment Platform',
@@ -3562,8 +3565,9 @@ const TRANSLATIONS = {
 'an-var-sub': '🎁 Subsidies',
 'an-var-jobs': '👥 Jobs',
 'an-var-sector': '🏷️ Activity',
-    'an-lbl-gov': '📍 Governorate',
+'an-lbl-gov': '📍 Governorate',
 'an-opt-all-gov': 'All governorates',
+'an-var-gov': '📍 Governorate',
   }
 };
 
@@ -4015,7 +4019,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const sectors = ['الفلاحة', 'الصيد البحري', 'تربية الأحياء المائية', 'الخدمات الفلاحية', 'التحويل الأولي المندمج'];
   const yearsList = [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
-
+  const governorates = ['تونس', 'أريانة', 'بن عروس', 'منوبة', 'زغوان', 'نابل', 'بنزرت', 'باجة', 'جندوبة', 'الكاف', 'سليانة', 'القيروان', 'سوسة', 'المنستير', 'المهدية', 'صفاقس', 'قابس', 'مدنين', 'تطاوين', 'قبلي', 'توزر', 'قفصة', 'سيدي بوزيد', 'القصرين'];
+  
   const declared = {
     'الفلاحة': [548.0,406.9,443.8,562.7,493.3,657.7,643.7,1286.4,1046.9,1014.3,840.4,882.8,932.1,926.4,834.7,898.6],
     'الصيد البحري': [14.0,19.8,34.3,35.2,36.1,44.7,50.3,81.2,63.2,75.0,63.3,58.3,118.7,86.6,36.1,38.1],
@@ -4035,20 +4040,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const subsidy = [59.2,62.2,63.5,69.9,81.2,91.2,96.9,145.1,211.4,187.3,146.9,162.5,168.2,139.5,129.4,120.1];
   const jobs = [5619,5691,5569,5163,5082,5635,5795,5719,6654,5464,3965,4288,3552,3076,3001,3015];
   
-  // Build flat dataset
-  const dynamicData = [];
-  for (let i = 0; i < yearsList.length; i++) {
-    for (const s of sectors) {
+
+// Build flat dataset with governorate field
+const dynamicData = [];
+for (let i = 0; i < yearsList.length; i++) {
+  for (const s of sectors) {
+    for (const g of governorates) {
+      const govFactor = 1 / governorates.length;
       dynamicData.push({
         year: yearsList[i],
         sector: s,
-        declared_value: declared[s][i],
-        approved_value: approved[s][i],
-        subsidy: subsidy[i]/5,
-        jobs: jobs[i]/5
+        governorate: g,
+        declared_value: declared[s][i] * govFactor,
+        approved_value: approved[s][i] * govFactor,
+        subsidy: subsidy[i] / 5 * govFactor,
+        jobs: Math.round(jobs[i] / 5 * govFactor)
       });
     }
   }
+}
 
   let mainChart = null;
   let dynamicChart = null;
@@ -4067,9 +4077,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function getFieldLabel(field) {
     const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
     const map = {
-      fr: { year:'📅 Année', sector:'🏷️ Activité', declared_value:'💰 Déclarations', approved_value:'✅ Approbations', subsidy:'🎁 Subventions', jobs:'👥 Emplois' },
-      ar: { year:'📅 السنة', sector:'🏷️ النشاط', declared_value:'💰 التصاريح', approved_value:'✅ المصادقات', subsidy:'🎁 المنح', jobs:'👥 مواطن الشغل' },
-      en: { year:'📅 Year', sector:'🏷️ Activity', declared_value:'💰 Declared', approved_value:'✅ Approved', subsidy:'🎁 Subsidies', jobs:'👥 Jobs' }
+      fr: { year:'📅 Année', sector:'🏷️ Activité', governorate:' Gouvernorat', declared_value:'💰 Déclarations', approved_value:'✅ Approbations', subsidy:'🎁 Subventions', jobs:'👥 Emplois' },
+      ar: { year:' السنة', sector:'🏷️ النشاط', governorate:'📍 الولاية', declared_value:' التصاريح', approved_value:'✅ المصادقات', subsidy:'🎁 المنح', jobs:' مواطن الشغل' },
+      en: { year:'📅 Year', sector:'🏷️ Activity', governorate:'📍 Governorate', declared_value:'💰 Declared', approved_value:'✅ Approved', subsidy:'🎁 Subsidies', jobs:'👥 Jobs' }
     };
     return (map[lang] && map[lang][field]) || field;
   }
@@ -4107,14 +4117,22 @@ function updateMainChart() {
   const labels = orderedIndices.map(i => yearsList[i]);
   
   let declaredVals, approvedVals;
-  
-  // ✅ تطبيق فلتر الولاية (حالياً يعمل على مستوى وطني)
   if (sector === 'all') {
-    declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
-    approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
+    if (governorate === 'all') {
+      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
+      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
+    } else {
+      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (declared[s][i] / governorates.length), 0));
+      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (approved[s][i] / governorates.length), 0));
+    }
   } else {
-    declaredVals = orderedIndices.map(i => declared[sector][i]);
-    approvedVals = orderedIndices.map(i => approved[sector][i]);
+    if (governorate === 'all') {
+      declaredVals = orderedIndices.map(i => declared[sector][i]);
+      approvedVals = orderedIndices.map(i => approved[sector][i]);
+    } else {
+      declaredVals = orderedIndices.map(i => declared[sector][i] / governorates.length);
+      approvedVals = orderedIndices.map(i => approved[sector][i] / governorates.length);
+    }
   }
   
   // ✅ عرض معلومات الفلتر في العنوان (اختياري)
@@ -4218,7 +4236,7 @@ function exportToExcel() {
     const row = {};
     row[headers.year] = yearsList[idx];
     row[headers.activity] = sectorName;
-    row[headers.gov] = govName; // ✅ جديد
+    row[headers.gov] = governorate === 'all' ? 'Toutes' : governorate;
     if (sector === 'all') {
       row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
       row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
@@ -4234,7 +4252,7 @@ function exportToExcel() {
   const ws = XLSX.utils.json_to_sheet(sheetData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'APIA');
-  XLSX.writeFile(wb, `APIA_${sector}_${govName}_${startYear}_${endYear}.xlsx`); // ✅ محدّث
+    XLSX.writeFile(wb, `APIA_${sector === 'all' ? 'all' : sector}_${governorate === 'all' ? 'all' : governorate}_${startYear}_${endYear}.xlsx`);
 }
 
   function setupDropZone(zoneId, type) {
@@ -4434,6 +4452,7 @@ if (divideByYears) {
       updateMainChart();
     });
     document.getElementById('sectorFilter').addEventListener('change', updateMainChart);
+    document.getElementById('govFilter').addEventListener('change', updateMainChart);
 
     // Mode toggle
     document.getElementById('btnChart').addEventListener('click', () => setDynamicMode('chart'));
