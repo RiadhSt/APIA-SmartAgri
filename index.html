@@ -4300,10 +4300,6 @@ const governorateInvestmentData = {
   }
 };
   
-
-// ✅ الجديد (بيانات مفصلة حسب الولايات)
-const governorates = ['تونس', 'أريانة', 'بن عروس', 'منوبة', 'زغوان', 'نابل', 'بنزرت', 'باجة', 'جندوبة', 'الكاف', 'سليانة', 'القيروان', 'سوسة', 'المنستير', 'المهدية', 'صفاقس', 'قابس', 'مدنين', 'تطاوين', 'قبلي', 'توزر', 'قفصة', 'سيدي بوزيد', 'القصرين'];
-
 const dynamicData = [];
 for (let i = 0; i < yearsList.length; i++) {
   const year = yearsList[i].toString();
@@ -4888,7 +4884,7 @@ function selectOpportunity(opp) {
   closeGovDetail();
   
   // Show reset button
-  const resetBtn = document.getElementById('btn-reset-filter');
+  const resetBtn = document.getElementById('btn-reset-map');
   if (resetBtn) resetBtn.style.display = 'inline-flex';
   
   // Highlight governorates on map
