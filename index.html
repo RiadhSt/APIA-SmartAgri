@@ -4720,7 +4720,7 @@ if (divideByYears) {
     // ✅ فلتر الولايات
 const govFilter = document.getElementById('govFilter');
 if (govFilter) govFilter.addEventListener('change', updateMainChart);
-
+document.getElementById('govFilter').addEventListener('change', updateMainChart);
     // Mode toggle
     document.getElementById('btnChart').addEventListener('click', () => setDynamicMode('chart'));
     document.getElementById('btnTable').addEventListener('click', () => setDynamicMode('table'));
