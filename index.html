@@ -4357,7 +4357,7 @@ function updateMainChart() {
   if (typeof Chart === 'undefined') return;
   
   const sector = document.getElementById('sectorFilter').value;
-  const governorate = document.getElementById('govFilter').value; // ✅ جديد
+  const governorate = document.getElementById('govFilter').value;
   
   let startYear = parseInt(document.getElementById('yearStartSlider').value);
   let endYear = parseInt(document.getElementById('yearEndSlider').value);
@@ -4377,26 +4377,46 @@ function updateMainChart() {
   const labels = orderedIndices.map(i => yearsList[i]);
   
   let declaredVals, approvedVals;
-  if (sector === 'all') {
-    if (governorate === 'all') {
+  
+  if (governorate === 'all') {
+    // ✅ كل الولايات: استخدم المجاميع الوطنية
+    if (sector === 'all') {
       declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + declared[s][i], 0));
       approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + approved[s][i], 0));
     } else {
-      declaredVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (declared[s][i] / governorates.length), 0));
-      approvedVals = orderedIndices.map(i => sectors.reduce((sum, s) => sum + (approved[s][i] / governorates.length), 0));
-    }
-  } else {
-    if (governorate === 'all') {
       declaredVals = orderedIndices.map(i => declared[sector][i]);
       approvedVals = orderedIndices.map(i => approved[sector][i]);
-    } else {
-      declaredVals = orderedIndices.map(i => declared[sector][i] / governorates.length);
-      approvedVals = orderedIndices.map(i => approved[sector][i] / governorates.length);
     }
+  } else {
+    // ✅ ولاية محددة: استخرج القيم الفعلية من governorateInvestmentData
+    declaredVals = orderedIndices.map(i => {
+      const year = yearsList[i].toString();
+      if (sector === 'all') {
+        // مجموع كل الأنشطة لهذه الولاية
+        let sum = 0;
+        for (const s of sectors) {
+          sum += governorateInvestmentData[year]?.['تصاريح']?.[s]?.[governorate] || 0;
+        }
+        return sum;
+      } else {
+        // قيمة نشاط محدد لهذه الولاية
+        return governorateInvestmentData[year]?.['تصاريح']?.[sector]?.[governorate] || 0;
+      }
+    });
+    
+    approvedVals = orderedIndices.map(i => {
+      const year = yearsList[i].toString();
+      if (sector === 'all') {
+        let sum = 0;
+        for (const s of sectors) {
+          sum += governorateInvestmentData[year]?.['مصادقات']?.[s]?.[governorate] || 0;
+        }
+        return sum;
+      } else {
+        return governorateInvestmentData[year]?.['مصادقات']?.[sector]?.[governorate] || 0;
+      }
+    });
   }
-  
-  // ✅ عرض معلومات الفلتر في العنوان (اختياري)
-  const govLabel = governorate === 'all' ? '' : ` - ${governorate}`;
   
   const labelDecl = { fr:'Déclaré (M.DT)', ar:'مصرح به (م.د)', en:'Declared (M.DT)' }[lang] || 'Déclaré';
   const labelAppr = { fr:'Approuvé (M.DT)', ar:'مصادق عليه (م.د)', en:'Approved (M.DT)' }[lang] || 'Approuvé';
