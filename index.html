@@ -4304,14 +4304,13 @@ const governorateInvestmentData = {
 // ✅ الجديد (بيانات مفصلة حسب الولايات)
 const governorates = ['تونس', 'أريانة', 'بن عروس', 'منوبة', 'زغوان', 'نابل', 'بنزرت', 'باجة', 'جندوبة', 'الكاف', 'سليانة', 'القيروان', 'سوسة', 'المنستير', 'المهدية', 'صفاقس', 'قابس', 'مدنين', 'تطاوين', 'قبلي', 'توزر', 'قفصة', 'سيدي بوزيد', 'القصرين'];
 
-// ✅ بناء dataset مع بيانات الولايات
 const dynamicData = [];
 for (let i = 0; i < yearsList.length; i++) {
   const year = yearsList[i].toString();
   for (const s of sectors) {
-    for (const g of governoratesList) {
-      const declVal = governorateStatsData[year]?.['تصاريح']?.[s]?.[g] ?? (declared[s][i] / governoratesList.length);
-      const apprVal = governorateStatsData[year]?.['مصادقات']?.[s]?.[g] ?? (approved[s][i] / governoratesList.length);
+    for (const g of governorates) {
+      const declVal = governorateInvestmentData[year]?.['تصاريح']?.[s]?.[g] ?? (declared[s][i] / governorates.length);
+      const apprVal = governorateInvestmentData[year]?.['مصادقات']?.[s]?.[g] ?? (approved[s][i] / governorates.length);
       dynamicData.push({
         year: yearsList[i],
         sector: s,
