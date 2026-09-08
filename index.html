@@ -2157,7 +2157,33 @@ html, body {
       <!-- Filters -->
       <div class="analysis-card analysis-card-half">
         <div class="analysis-card-title">📋 <span id="an-filters-title">Filtres des données</span></div>
+       <div class="analysis-filter-group">
+          <label id="an-lbl-sector">📂 Activité</label>
+          <select id="sectorFilter">
+            <option value="all" data-i18n="an-opt-all">كل الأنشطة</option>
+            <option value="الفلاحة" data-i18n="an-opt-agri">الفلاحة</option>
+            <option value="الصيد البحري" data-i18n="an-opt-fish">الصيد البحري</option>
+            <option value="تربية الأحياء المائية" data-i18n="an-opt-aqua">تربية الأحياء المائية</option>
+            <option value="الخدمات الفلاحية" data-i18n="an-opt-services">الخدمات الفلاحية</option>
+            <option value="التحويل الأولي المندمج" data-i18n="an-opt-transform">التحويل الأولي المندمج</option>
+          </select>
+        </div>
 
+
+        
+        <div class="analysis-filter-group">
+          <label id="an-lbl-years">📅 Période (années)</label>
+          <div class="analysis-range">
+            <div class="analysis-range-values">
+              <span id="yearStartLabel">2010</span>
+              <span id="yearEndLabel">2025</span>
+            </div>
+            <input type="range" id="yearStartSlider" min="2010" max="2025" value="2010" step="1">
+            <input type="range" id="yearEndSlider" min="2010" max="2025" value="2025" step="1">
+          </div>
+        </div>
+
+        
 <div class="analysis-filter-group">
   <label id="an-lbl-gov"> الولاية</label>
   <select id="govFilter">
@@ -2189,32 +2215,7 @@ html, body {
   </select>
 </div>
         
-        <div class="analysis-filter-group">
-          <label id="an-lbl-sector">📂 Activité</label>
-          <select id="sectorFilter">
-            <option value="all" data-i18n="an-opt-all">كل الأنشطة</option>
-            <option value="الفلاحة" data-i18n="an-opt-agri">الفلاحة</option>
-            <option value="الصيد البحري" data-i18n="an-opt-fish">الصيد البحري</option>
-            <option value="تربية الأحياء المائية" data-i18n="an-opt-aqua">تربية الأحياء المائية</option>
-            <option value="الخدمات الفلاحية" data-i18n="an-opt-services">الخدمات الفلاحية</option>
-            <option value="التحويل الأولي المندمج" data-i18n="an-opt-transform">التحويل الأولي المندمج</option>
-          </select>
-        </div>
-
-
-        
-        <div class="analysis-filter-group">
-          <label id="an-lbl-years">📅 Période (années)</label>
-          <div class="analysis-range">
-            <div class="analysis-range-values">
-              <span id="yearStartLabel">2010</span>
-              <span id="yearEndLabel">2025</span>
-            </div>
-            <input type="range" id="yearStartSlider" min="2010" max="2025" value="2010" step="1">
-            <input type="range" id="yearEndSlider" min="2010" max="2025" value="2025" step="1">
-          </div>
-        </div>
-
+ 
         <button class="analysis-export-btn" id="an-export-btn">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 1v8m0 0L4 6m3 3l3-3M2 12h10" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
