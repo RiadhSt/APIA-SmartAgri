@@ -1765,6 +1765,8 @@ html, body {
 #tnLeafletMap .leaflet-tile-pane {
     filter: brightness(1.1) contrast(1.4);
 }
+
+
 </style>  
 </head>
 <body>
@@ -2216,12 +2218,7 @@ html, body {
 </div>
         
  
-        <button class="analysis-export-btn" id="an-export-btn">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1v8m0 0L4 6m3 3l3-3M2 12h10" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span id="an-btn-export">Exporter en Excel</span>
-        </button>
+
       </div>
 
 <!-- Custom analysis (Drag & Drop) -->
@@ -2262,12 +2259,22 @@ html, body {
     <!-- RIGHT COLUMN: Charts -->
     <div class="analysis-col">
 
-      <div class="analysis-card analysis-card-half">
-        <div class="analysis-card-title">📈 <span id="an-main-title">Évolution des investissements (déclaré / approuvé)</span></div>
-        <div class="analysis-chart-container">
-          <canvas id="mainChart"></canvas>
-        </div>
-      </div>
+<div class="analysis-card analysis-card-half">
+  <div class="analysis-card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; width:100%;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <span id="an-main-title">📈 تطور الاستثمارات (مصرح به / مصادق عليه)</span>
+      <button class="analysis-export-btn" id="an-export-btn" style="width:auto; padding:4px 12px; margin-top:0; font-size:11px; background:linear-gradient(135deg, var(--green-mid), var(--green-glow)); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer; font-family:inherit; font-weight:600; transition:var(--transition); box-shadow:0 4px 15px rgba(29,184,99,0.3), inset 0 1px 0 rgba(255,255,255,0.2); display:inline-flex; align-items:center; gap:6px;">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1v8m0 0L4 6m3 3l3-3M2 12h10" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="an-btn-export">📊 تصدير Excel</span>
+      </button>
+    </div>
+  </div>
+  <div class="analysis-chart-container">
+    <canvas id="mainChart"></canvas>
+  </div>
+</div>
 
       <div class="analysis-card analysis-card-half">
         <div class="analysis-card-title">🔄 <span id="an-result-title">Résultat de l'analyse personnalisée</span></div>
@@ -4492,7 +4499,7 @@ function exportToExcel() {
   if (typeof XLSX === 'undefined') { alert('Excel library not loaded'); return; }
   
   const sector = document.getElementById('sectorFilter').value;
-  const governorate = document.getElementById('govFilter').value; // ✅ جديد
+  const governorate = document.getElementById('govFilter').value;
   let startYear = parseInt(document.getElementById('yearStartSlider').value);
   let endYear = parseInt(document.getElementById('yearEndSlider').value);
   
@@ -4504,35 +4511,57 @@ function exportToExcel() {
   
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'fr';
   const sectorName = getSectorLabel(sector, lang);
-  const govName = governorate === 'all' ? 'Tous' : governorate; // ✅ جديد
+  const govName = governorate === 'all' ? 'جميع الولايات' : governorate;
   
   const headers = {
-    fr: { year:'Année', activity:'Activité', gov:'Gouvernorat', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)', sub:'Subvention (M.DT)', jobs:'Emplois' },
-    ar: { year:'السنة', activity:'النشاط', gov:'الولاية', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)', sub:'المنحة (م.د)', jobs:'مواطن الشغل' },
-    en: { year:'Year', activity:'Activity', gov:'Governorate', decl:'Declared (M.DT)', appr:'Approved (M.DT)', sub:'Subsidy (M.DT)', jobs:'Jobs' }
+    fr: { year:'Année', activity:'Activité', gov:'Gouvernorat', decl:'Déclaré (M.DT)', appr:'Approuvé (M.DT)' },
+    ar: { year:'السنة', activity:'النشاط', gov:'الولاية', decl:'المصرح به (م.د)', appr:'المصادق عليه (م.د)' },
+    en: { year:'Year', activity:'Activity', gov:'Governorate', decl:'Declared (M.DT)', appr:'Approved (M.DT)' }
   }[lang] || {};
   
   const sheetData = indices.map(idx => {
+    const year = yearsList[idx];
+    const yearStr = year.toString();
     const row = {};
-    row[headers.year] = yearsList[idx];
+    row[headers.year] = year;
     row[headers.activity] = sectorName;
-    row[headers.gov] = governorate === 'all' ? 'Toutes' : governorate;
-    if (sector === 'all') {
-      row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
-      row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
+    row[headers.gov] = govName;
+    
+    if (governorate === 'all') {
+      // ✅ جميع الولايات: استخدم البيانات الوطنية
+      if (sector === 'all') {
+        row[headers.decl] = sectors.reduce((sum, s) => sum + declared[s][idx], 0);
+        row[headers.appr] = sectors.reduce((sum, s) => sum + approved[s][idx], 0);
+      } else {
+        row[headers.decl] = declared[sector][idx];
+        row[headers.appr] = approved[sector][idx];
+      }
     } else {
-      row[headers.decl] = declared[sector][idx];
-      row[headers.appr] = approved[sector][idx];
+      // ✅ ولاية محددة: استخرج القيم الفعلية من governorateInvestmentData
+      if (sector === 'all') {
+        let declSum = 0, apprSum = 0;
+        for (const s of sectors) {
+          declSum += governorateInvestmentData[yearStr]?.['تصاريح']?.[s]?.[governorate] || 0;
+          apprSum += governorateInvestmentData[yearStr]?.['مصادقات']?.[s]?.[governorate] || 0;
+        }
+        row[headers.decl] = declSum;
+        row[headers.appr] = apprSum;
+      } else {
+        row[headers.decl] = governorateInvestmentData[yearStr]?.['تصاريح']?.[sector]?.[governorate] || 0;
+        row[headers.appr] = governorateInvestmentData[yearStr]?.['مصادقات']?.[sector]?.[governorate] || 0;
+      }
     }
-    row[headers.sub] = subsidy[idx];
-    row[headers.jobs] = jobs[idx];
+    
     return row;
   });
   
   const ws = XLSX.utils.json_to_sheet(sheetData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'APIA');
-    XLSX.writeFile(wb, `APIA_${sector === 'all' ? 'all' : sector}_${governorate === 'all' ? 'all' : governorate}_${startYear}_${endYear}.xlsx`);
+  
+  const govSuffix = governorate === 'all' ? 'all' : governorate;
+  const sectorSuffix = sector === 'all' ? 'all' : sector;
+  XLSX.writeFile(wb, `APIA_${sectorSuffix}_${govSuffix}_${startYear}_${endYear}.xlsx`);
 }
 
   function setupDropZone(zoneId, type) {
