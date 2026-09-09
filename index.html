@@ -2006,11 +2006,10 @@ html, body {
             <label class="form-label" id="lbl-budget">Budget disponible (DT)</label>
             <select class="form-select" id="sel-budget">
               <option value="">-- Choisir --</option>
-              <option>أقل من 60 ألف دينار</option>
-              <option>60 ألف دينار  --  200 ألف دينار</option>
-              <option>200 ألف دينار  -- 1  مليون دينار</option>
-              <option>1 مليون دينار  -- 2  مليون دينار</option>
-              <option>أكثر من 2 مليون دينار</option>
+              <option>أقل من 200 ألف دينار</option>
+              <option>200 ألف دينار  --  500 ألف دينار</option>
+              <option>500 ألف دينار  -- 1  مليون دينار</option>
+              <option>أكثر من 1 مليون دينار</option>
             </select>
           </div>
 
@@ -3660,30 +3659,29 @@ function toggleChip(el) {
 function parseBudgetMax(budgetStr) {
   if (!budgetStr) return 9999999;
   const cleaned = budgetStr.replace(/\s/g, '');
-  if (cleaned.includes('أقل من 60 ألف دينار')) return 60000;
-  if (cleaned.includes('60 ألف دينار  --  200 ألف دينار')) return 200000;
-  if (cleaned.includes('200 ألف دينار  -- 1  مليون دينار')) return 1000000;
-  if (cleaned.includes('1 مليون دينار  -- 2  مليون دينار')) return 2000000;
+  if (cleaned.includes('أقل من 200 ألف دينار')) return 200000;
+  if (cleaned.includes('200 ألف دينار  --  500 ألف دينار')) return 500000;
+  if (cleaned.includes('500 ألف دينار  -- 1  مليون دينار')) return 1000000;
   return 9999999;
 }
 
 function getBudgetRange(budgetStr) {
-  const cleaned = budgetStr.replace(/\s/g, '');
+  if (!budgetStr) return { min: 0, max: 99999999 };
   
-  if (cleaned.includes('أقلمن60ألفدينار')) {
-    return { min: 0, max: 60000 };
+  if (budgetStr.includes('أقل من 200 ألف')) {
+    return { min: 0, max: 200000 };
   }
-  if (cleaned.includes('60ألفدينار--200ألفدينار')) {
-    return { min: 60000, max: 200000 };
+  if (budgetStr.includes('200 ألف') && budgetStr.includes('500 ألف')) {
+    return { min: 200000, max: 500000 };
   }
-  if (cleaned.includes('200ألفدينار--1مليوندينار')) {
-    return { min: 200000, max: 1000000 };
+  if (budgetStr.includes('500 ألف') && budgetStr.includes('1 مليون')) {
+    return { min: 500000, max: 1000000 };
   }
-  if (cleaned.includes('1مليوندينار--2مليوندينار')) {
-    return { min: 1000000, max: 2000000 };
+  if (budgetStr.includes('أكثر من 1 مليون')) {
+    return { min: 1000000, max: 99999999 };
   }
-  // أكثر من 2 مليون دينار
-  return { min: 2000000, max: 99999999 };
+  
+  return { min: 0, max: 99999999 };
 }
 
 // دالة لعرض مشروع محدد
