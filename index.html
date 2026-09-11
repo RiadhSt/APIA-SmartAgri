@@ -1959,7 +1959,7 @@ html, body {
   <div class="page-header" style="margin-bottom:1.5rem;">
     <div class="page-eyebrow" id="video-eyebrow">فيديو توضيحي</div>
     <div class="page-title" id="video-title" style="font-size:22px;">كيف تستخدم منصة SMART APIA؟</div>
-    <div class="page-desc" id="video-desc" style="margin-top:6px;">شاهد هذا الفيديو القصير لاكتشاف كيفية استغلال المنصة لتحليل الاستثمارات الفلاحية في تونس.</div>
+    <div class="page-desc" id="video-desc" style="margin-top:6px;">شاهد هذا الفيديو القصير لاكتشاف كيفية استعمال منصة الذكاء الفلاحي لاستكشاف وتحليل الاستثمار الفلاحي التونسي.</div>
   </div>
 
   <div class="glass-card" style="padding:1.25rem; max-width:900px; margin:0 auto;">
@@ -1972,7 +1972,7 @@ html, body {
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
 </iframe>
     <div style="margin-top:1rem; font-size:12px; color:var(--text-muted); text-align:center;">
-      🎥 مدة الفيديو: X دقائق · يشرح خطوات استخدام المنصة بالتفصيل
+      🎥 مدة الفيديو: 5 دقائق · يشرح خطوات استخدام المنصة بالتفصيل
     </div>
   </div>
 </div>
@@ -2399,6 +2399,57 @@ html, body {
 </div>
 
 
+<!-- ✅ زر عائم لفتح الفيديو -->
+<button id="floating-video-btn" onclick="openVideoModal()" title="شاهد الفيديو التوضيحي" style="position:fixed; bottom:30px; left:30px; z-index:9999; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--green-mid), var(--green-glow)); border:none; cursor:pointer; box-shadow:0 6px 25px rgba(29,184,99,0.5); display:flex; align-items:center; justify-content:center; transition:all 0.3s ease;">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <polygon points="8,5 8,19 19,12" fill="#fff"/>
+  </svg>
+</button>
+
+<!-- Modal الفيديو -->
+<div id="video-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:100%; max-width:900px; position:relative;">
+    <button onclick="closeVideoModal()" style="position:absolute; top:-40px; right:0; background:#e74c3c; color:#fff; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:18px;">✕</button>
+    <div style="position:relative; width:100%; padding-bottom:56.25%; border-radius:12px; overflow:hidden; background:#000;">
+      <iframe id="video-iframe" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+function openVideoModal() {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('video-iframe');
+  iframe.src = 'https://www.youtube.com/embed/fena4RM8DrA?autoplay=1&rel=0&modestbranding=1';
+  modal.style.display = 'flex';
+}
+
+function closeVideoModal() {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('video-iframe');
+  iframe.src = '';
+  modal.style.display = 'none';
+}
+
+// إغلاق الفيديو بزر Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeVideoModal();
+});
+
+// إغلاق الفيديو بالنقر على الخلفية
+document.addEventListener('DOMContentLoaded', () => {
+  const videoModal = document.getElementById('video-modal');
+  if (videoModal) {
+    videoModal.addEventListener('click', (e) => {
+      if (e.target.id === 'video-modal') closeVideoModal();
+    });
+  }
+});
+</script>
+
+
+
+  
 
 <!-- External SDKs -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -3400,6 +3451,9 @@ const TRANSLATIONS = {
 'an-lbl-gov': '📍 Gouvernorat',
 'an-opt-all-gov': 'Tous les gouvernorats',
 'an-var-gov': '📍 Gouvernorat',
+        'video-eyebrow': 'Vidéo tutorielle',
+    'video-title': 'Comment utiliser SMART APIA ?',
+    'video-desc': 'Regardez cette courte vidéo pour découvrir comment exploiter la plateforme.',
   },
   ar: {
     'brand-sub': 'منصة الذكاء الفلاحي للاستثمار',
@@ -3500,6 +3554,9 @@ const TRANSLATIONS = {
 'an-lbl-gov': '📍 الولاية',
 'an-opt-all-gov': 'جميع الولايات',
 'an-var-gov': '📍 الولاية',
+        'video-eyebrow': 'فيديو توضيحي',
+    'video-title': 'كيف تستخدم منصة SMART APIA؟',
+    'video-desc': 'شاهد هذا الفيديو القصير لاكتشاف كيفية استعمال منصة الذكاء الفلاحي لاستكشاف وتحليل الاستثمار الفلاحي التونسي.',
   },
   en: {
     'brand-sub': 'Smart Agricultural Investment Platform',
@@ -3600,6 +3657,9 @@ const TRANSLATIONS = {
 'an-lbl-gov': '📍 Governorate',
 'an-opt-all-gov': 'All governorates',
 'an-var-gov': '📍 Governorate',
+        'video-eyebrow': 'Video tutorial',
+    'video-title': 'How to use SMART APIA?',
+    'video-desc': 'Watch this short video to discover how to use the platform.',
   }
 };
 
