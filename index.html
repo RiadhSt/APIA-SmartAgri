@@ -1903,6 +1903,44 @@ html, body {
 }
 
 
+/* ═══════════════════════════════════════════════════
+   COMING BAR — شريط ذهبي متحرك (عنصر حقيقي)
+   ═══════════════════════════════════════════════════ */
+
+.feature-card-coming {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.coming-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 182, 97, 0.5) 30%,
+    #d4b661 50%,
+    rgba(212, 182, 97, 0.5) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(212, 182, 97, 0.8);
+  animation: slideGold 2s linear infinite;
+  z-index: 999;
+  pointer-events: none;
+}
+
+@keyframes slideGold {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 </style>  
 </head>
 <body>
@@ -2108,17 +2146,18 @@ html, body {
 
 
 
-<div class="glass-card feature-card" style="opacity: 0.5; pointer-events: none;">
-  <div class="fc-icon" style="background:linear-gradient(135deg,rgba(200,230,210,0.1),rgba(200,230,210,0.02));">
+<div class="glass-card feature-card feature-card-coming">
+<div class="coming-bar"></div>
+  <div class="fc-icon" style="background:linear-gradient(135deg,rgba(200,230,210,0.1),rgba(200,230,210,0.02)); opacity: 0.6;">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke="rgba(200,230,210,0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
       <path d="M12 8v4M12 16h.01" stroke="rgba(200,230,210,0.6)" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </div>
-  <div class="fc-title" style="color:var(--text-muted);">قريباً - Coming Soon</div>
-  <div class="fc-desc" style="color:var(--text-muted);">ميزة جديدة قيد التطوير</div>
+  <div class="fc-title" style="color:var(--text-muted); opacity: 0.7;">قريباً - Soon</div>
+  <div class="fc-desc" style="color:var(--text-muted); opacity: 0.7;">ميزة جديدة قيد التطوير</div>
   <div class="fc-footer">
-    <span class="fc-tag" style="opacity:0.5;">Coming Soon</span>
+    <span class="fc-tag" style="opacity: 0.8;">Coming Soon</span>
   </div>
 </div>
 
