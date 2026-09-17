@@ -109,14 +109,29 @@ html, body {
 .brand { display: flex; align-items: center; gap: 14px; }
 
 .brand-logo {
-  width: 42px; height: 42px;
-  background: linear-gradient(135deg, var(--green-mid), var(--green-glow));
-  border-radius: 12px;
+  width: 48px; height: 48px;
+  background: transparent;         /* ← إزالة الخلفية */
+  border-radius: 0;                /* ← إزالة الحواف الدائرية */
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 20px rgba(29,184,99,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: none;                /* ← إزالة الظل الأخضر */
   flex-shrink: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;               /* ← السماح للشعار بالظهور كاملاً */
+  padding: 0;                      /* ← إزالة الحشوة */
+}
+
+.brand-mascotte {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));  /* ظل خفيف ليبرز على الخلفية الداكنة */
+  transition: transform 0.3s ease;
+}
+
+.brand:hover .brand-mascotte {
+  transform: scale(1.05);   /* لمسة تفاعلية عند المرور */
 }
 
 .brand-logo::before {
@@ -1765,6 +1780,127 @@ html, body {
 #tnLeafletMap .leaflet-tile-pane {
     filter: brightness(1.1) contrast(1.4);
 }
+/* ═══════════════════════════════════════════════════
+   OFFICIAL TOPBAR — الجمهورية التونسية
+   ═══════════════════════════════════════════════════ */
+.official-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212,182,97,0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  transition: var(--transition);
+}
+
+.official-topbar:hover {
+  border-color: rgba(212,182,97,0.3);
+  background: rgba(255,255,255,0.06);
+}
+
+/* العلم */
+.official-flag-small {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.flag-img {
+  width: 34px;
+  height: 22px;
+  border-radius: 3px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(231,0,19,0.35);
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: all 0.3s ease;
+}
+
+.official-topbar:hover .flag-img {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231,0,19,0.45);
+}
+
+/* النص الرسمي — بنفس لون "منصة الذكاء الفلاحي للاستثمار" */
+.official-topbar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.official-topbar-line-1 {
+  font-size: 10px;
+  font-weight: Bold;
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.official-topbar-line-2 {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.official-topbar-line-3 {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* RTL */
+[dir="rtl"] .official-topbar { flex-direction: row-reverse; }
+[dir="rtl"] .official-topbar-text { text-align: center; }
+[dir="rtl"] .official-topbar-line-1 { letter-spacing: 0.12em; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .official-topbar-line-2 { display: none; }
+  .official-topbar { padding: 5px 12px; }
+}
+
+@media (max-width: 900px) {
+  .official-topbar { display: none; }
+}
+
+
+
+/* ═══════════════════════════════════════════════════
+   BRAND STATUS — بيانات محدَّثة أسفل الشعار
+   ═══════════════════════════════════════════════════ */
+.brand-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.brand-status .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green-glow);
+  box-shadow: 0 0 8px var(--green-glow);
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* RTL */
+[dir="rtl"] .brand-status {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
 
 
 </style>  
@@ -1782,25 +1918,41 @@ html, body {
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="brand">
-      <div class="brand-logo">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <path d="M11 3L5 7v5.5l6 3.5 6-3.5V7L11 3z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.8)" stroke-width="1"/>
-          <circle cx="11" cy="11" r="3" fill="rgba(255,255,255,0.9)"/>
-          <circle cx="11" cy="11" r="1.2" fill="#0d7a45"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <div class="brand-name">SMART APIA</div>
-        <div class="brand-sub" id="brand-sub">Plateforme Intelligente d'Investissement Agricole</div>
-      </div>
-    </div>
+<div class="brand-logo">
+  <img 
+    src="https://raw.githubusercontent.com/RiadhSt/APIA-SmartAgri/68e041dc5f9ac46991d3a673a7b3218f335e7c7b/mascotte_apia.png" 
+    alt="APIA Mascotte" 
+    class="brand-mascotte">
+</div>
+</div>
 
-    <div class="topbar-center">
-      <div class="top-status">
-        <div class="status-dot"></div>
-        <span id="statusText">Données à jour</span>
-      </div>
+<div class="brand-text">
+  <div class="brand-name">SMART APIA</div>
+  <div class="brand-sub" id="brand-sub">منصة الذكاء الفلاحي للاستثمار</div>
+  <div class="brand-status">
+    <span class="status-dot"></span>
+    <span id="statusText">بيانات محدَّثة</span>
+  </div>
+</div>
+
+
+<div class="topbar-center">
+  <div class="official-topbar">
+    <div class="official-flag-small">
+      <img 
+        src="https://raw.githubusercontent.com/RiadhSt/APIA-SmartAgri/68e041dc5f9ac46991d3a673a7b3218f335e7c7b/Flag.png" 
+        alt="علم تونس" 
+        class="flag-img">
     </div>
+    <div class="official-topbar-text">
+      <div class="official-topbar-line-1" id="off-line-1">الجمهورية التونسية</div>
+      <div class="official-topbar-line-2" id="off-line-2">وزارة الفلاحة والموارد المائية والصيد البحري</div>
+      <div class="official-topbar-line-3" id="off-line-3">وكالة النهوض بالاستثمارات الفلاحية</div>
+    </div>
+  </div>
+</div>
+
+
 
 <div class="topbar-right">
   <div class="lang-toggle">
@@ -1953,6 +2105,25 @@ html, body {
           <div class="fc-footer"><span class="fc-tag" style="background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.2);color:var(--gold)">KPIs Live</span><span class="fc-arrow">→</span></div>
         </div>
 -->
+
+
+
+<div class="glass-card feature-card" style="opacity: 0.5; pointer-events: none;">
+  <div class="fc-icon" style="background:linear-gradient(135deg,rgba(200,230,210,0.1),rgba(200,230,210,0.02));">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="rgba(200,230,210,0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <path d="M12 8v4M12 16h.01" stroke="rgba(200,230,210,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="fc-title" style="color:var(--text-muted);">قريباً - Coming Soon</div>
+  <div class="fc-desc" style="color:var(--text-muted);">ميزة جديدة قيد التطوير</div>
+  <div class="fc-footer">
+    <span class="fc-tag" style="opacity:0.5;">Coming Soon</span>
+  </div>
+</div>
+
+
+
        </div>
 
 
@@ -3304,6 +3475,9 @@ const TRANSLATIONS = {
   fr: {
     'brand-sub': "Plateforme Intelligente d'Investissement Agricole",
     'statusText': 'Données à jour',
+'off-line-1': 'RÉPUBLIQUE TUNISIENNE',
+'off-line-2': "Ministère de l'Agriculture, des Ressources Hydrauliques et de la Pêche Maritime",
+'off-line-3': 'Agence de Promotion des Investissements Agricoles',
     'label-main': 'Principal',
     'label-analytics': 'Analytique',
     'label-tools': 'Outils IA',
@@ -3407,6 +3581,9 @@ const TRANSLATIONS = {
   ar: {
     'brand-sub': 'منصة الذكاء الفلاحي للاستثمار',
     'statusText': 'بيانات محدَّثة',
+'off-line-1': 'الجمهورية التونسية',
+'off-line-2': 'وزارة الفلاحة والموارد المائية والصيد البحري',
+'off-line-3': 'وكالة النهوض بالاستثمارات الفلاحية',
     'label-main': 'الرئيسية',
     'label-analytics': 'التحليلات',
     'label-tools': 'أفكار المشاريع',
@@ -3510,6 +3687,9 @@ const TRANSLATIONS = {
   en: {
     'brand-sub': 'Smart Agricultural Investment Platform',
     'statusText': 'Data up to date',
+    'off-line-1': 'REPUBLIC OF TUNISIA',
+'off-line-2': 'Ministry of Agriculture, Water Resources and Fisheries',
+'off-line-3': 'Agricultural Investment Promotion Agency',
     'label-main': 'Main',
     'label-analytics': 'Analytics',
     'label-tools': 'Project Ideas',
